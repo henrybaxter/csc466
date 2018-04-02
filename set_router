@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -e
 
 # NOTE
 # class 5 is the 'treated' traffic
@@ -11,7 +11,7 @@ if [ "$#" -ne 3 ]; then
 fi
 
 echo "Resetting iptables"
-./ipt
+./set_iptables
 
 RATE_LIMIT=$1
 LATENCY=$2
