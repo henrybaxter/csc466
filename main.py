@@ -140,7 +140,7 @@ def execute_request(chrome, url):
 def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
     stdin, stdout, stderr = router.exec_command(
-        './set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
+        './csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
     )
     logger.debug('Set router, output was\n%s', stdout.read().decode('utf-8'))
     # ok now that we have setup the router, what about the server?
