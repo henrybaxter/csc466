@@ -1,9 +1,10 @@
-import toml
+import pprint
 import random
 from os.path import join
 import os
 import errno
 
+import toml
 from jinja2 import Template
 
 
@@ -16,16 +17,19 @@ def main():
             raise
     template = Template(open('templates/page.html').read())
     urls = []
-    print(config)
+    pprint.pprint(config)
+    missing = set(config['object-sizes']) - set(config['available-image-sizes'])
+    if missing:
+        print('Missing the following image sizes:', ', '.join(str(m) for m in missing))
+        sys.exit(1)
     for cnt in config['object-counts']:
         for size in config['object-sizes']:
             name = '{} objects of size {}kb'.format(cnt, size)
-            print(cnt, size)
-            path = 'page-{}-{}kb.html'.format(cnt, size)
+            path = 'page-{}-{}k.html'.format(cnt, size)
             urls.append((name, path))
             context = {
                 'images': [{
-                    'url': 'images/{}kb.jpg?rnd={}'.format(size, random.random())
+                    'url': 'images/{}k.jpg?rnd={}'.format(size, random.random())
                 } for i in range(cnt)],
                 'title': 'Test {} images of size {}kb'.format(cnt, size)
             }

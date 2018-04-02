@@ -53,6 +53,11 @@ def parse_args():
         config['object-sizes'] = [args.object_sizes]
     if args.timeout is not None:
         config['page-load-timeout'] = args.timeout
+    missing = set(config['object-sizes']) - set(config['available-image-sizes'])
+    if missing:
+        print('Missing the following image sizes:', ', '.join(str(m) for m in missing))
+        sys.exit(1)
+    sys.exit()
     logger.debug('Command line arguments parsed')
     return config
 
@@ -153,7 +158,7 @@ def run_treatment(config, router, chrome, treatment):
     # of object-counte--object-size--page.html
     url = urljoin(
         config['host'],
-        'page-{object-count}-{object-size}kb.html'.format(**treatment)
+        'page-{object-count}-{object-size}k.html'.format(**treatment)
     )
     logger.info('Requesting page {}'.format(url))
     results = []

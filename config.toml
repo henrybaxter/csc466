@@ -20,6 +20,8 @@ object-counts = [0, 1, 2]
 object-size = 100
 object-sizes = [100]
 
+available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000, 210000]
+
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
