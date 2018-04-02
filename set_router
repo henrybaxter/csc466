@@ -11,7 +11,7 @@ if [ "$#" -ne 3 ]; then
 fi
 
 echo "Resetting iptables"
-./set_iptables
+~/csc466/set_iptables
 
 RATE_LIMIT=$1
 LATENCY=$2
