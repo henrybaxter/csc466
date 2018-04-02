@@ -26,7 +26,8 @@ available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000, 210000]
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
 
-webroot = 'root'
+tcp-root = 'tcp-root'
+quic-root = 'quic-root'
 
 # number of times to reepeat each test (sample size)
 iterations=  10
