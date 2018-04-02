@@ -1,0 +1,66 @@
+#!/bin/bash -x
+
+# NOTE
+# class 5 is the 'treated' traffic
+# class 10 is the 'default' traffic
+# for both ingress and egress
+
+if [ "$#" -ne 3 ]; then
+    echo "Must provide 3 command line arguments (rate limit, latency, packet loss)"
+    exit 1
+fi
+
+echo "Resetting iptables"
+./ipt
+
+RATE_LIMIT=$1
+LATENCY=$2
+PACKET_LOSS=$3
+
+echo "Using rate-limit=$RATE_LIMIT, latency=$LATENCY, packet-loss=$PACKET_LOSS"
+
+# virtual interface module
+echo 'Ensuring ifb module'
+modprobe ifb numifbs=1
+
+# cleanup
+echo 'Cleaning up old qdisc information'
+tc qdisc del dev eth0 handle ffff: ingress
+tc qdisc del dev eth0 root
+tc qdisc del dev ifb0 root
+ip link set dev ifb0 down
+
+echo 'Bringing up virtual ifb'
+# virtual interface up
+ip link set dev ifb0 up
+
+echo 'Sending eth0 ingress through ifb0'
+# ingress on eth0 is redirected through ifb0
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
+
+echo 'Setting egress state on eth0'
+# now egress on eth0 can be modified
+tc qdisc add dev eth0 root handle 1: htb default 10
+tc class add dev eth0 parent 1: classid 1:1 htb rate 1000mbit
+tc class add dev eth0 parent 1:1 classid 1:10 htb rate 1000mbit
+tc class add dev eth0 parent 1:1 classid 1:5 htb rate ${RATE_LIMIT}mbit ceil ${RATE_LIMIT}mbit
+tc filter add dev eth0 protocol ip parent 1: prio 1 u32 match ip dport 23 0xfff flowid 1:5
+tc filter add dev eth0 protocol ip parent 1: prio 1 u32 match ip dport 80 0xfff flowid 1:5
+tc filter add dev eth0 protocol ip parent 1: prio 1 u32 match ip dport 443 0xfff flowid 1:5
+tc filter add dev eth0 protocol ip parent 1: prio 1 u32 match ip dport 5001 0xfff flowid 1:5
+tc qdisc add dev eth0 parent 1:5 handle 10: netem limit 10000 delay ${LATENCY}ms loss ${PACKET_LOSS}%
+
+echo 'Setting egress state on ifb0 (eth0 ingress)'
+# and ingress on eth0 (egress on ifb0) can be modified
+tc qdisc add dev ifb0 root handle 1: htb default 10
+tc class add dev ifb0 parent 1: classid 1:1 htb rate 1000mbit
+tc class add dev ifb0 parent 1:1 classid 1:10 htb rate 1000mbit
+tc class add dev ifb0 parent 1:1 classid 1:5 htb rate ${RATE_LIMIT}mbit ceil ${RATE_LIMIT}mbit
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 23 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 80 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 443 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 5001 0xfff flowid 1:5
+tc qdisc add dev ifb0 parent 1:5 handle 10: netem limit 10000 delay ${LATENCY}ms loss ${PACKET_LOSS}%
+
+echo 'Finished'
