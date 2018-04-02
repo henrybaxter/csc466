@@ -1,0 +1,54 @@
+- want to have ec2 (remote) router for adjusting traffic
+- need to create another ec2 server and put them both in a private network
+- create new VPC
+- create new subnet
+- create new internet gateway
+- create new route in VPC routing table
+- create new ec2 instance (router)
+- create new ec2 instance (server)
+- associate elastic ip with router
+- associate elastic ip with server
+- create A record csc466-router.baxtergroup.io => 18.233.20.194
+- create A record csc466-server.baxtergroup.io => 18.233.253.240
+Henrys-Mac-Pro:~ henry$ ping csc466-router.baxtergroup.io
+PING csc466-router.baxtergroup.io (18.233.20.194): 56 data bytes
+64 bytes from 18.233.20.194: icmp_seq=0 ttl=40 time=89.981 ms
+64 bytes from 18.233.20.194: icmp_seq=1 ttl=40 time=88.600 ms
+^C
+--- csc466-router.baxtergroup.io ping statistics ---
+2 packets transmitted, 2 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 88.600/89.290/89.981/0.691 ms
+Henrys-Mac-Pro:~ henry$ ping csc466-server.baxtergroup.io
+PING csc466-server.baxtergroup.io (18.233.253.240): 56 data bytes
+64 bytes from 18.233.253.240: icmp_seq=0 ttl=40 time=93.571 ms
+64 bytes from 18.233.253.240: icmp_seq=1 ttl=40 time=92.902 ms
+^C
+--- csc466-server.baxtergroup.io ping statistics ---
+2 packets transmitted, 2 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 92.902/93.237/93.571/0.335 ms
+Henrys-Mac-Pro:~ henry$
+- update .ssh/config with new values
+    - csc466-router
+    - csc466-server
+    - csc466-server-via-router (SSH 5522 on router => 22 on server via VPC)
+- change hostnames on csc466-router and csc466-server, eg
+$ sudo hostname csc466-router
+$ sudo vim /etc/hosts
+127.0.0.1 csc466-router
+- write iptables script:
+
+- next want to test qdisc (tcp/ip with nginx, different traffic shaping)
+
+tc class change dev ifb0 parent 1:1 classid 1:5 netem loss loss 3%
+tc filter 
+
+tc qdisc del dev eth0 root
+tc qdisc add dev eth0 root handle1: htb default 1
+- iperf to verify understanding
+
+- apt install nginx
+- add-apt-repository ppa:certbot/certbot
+- apt install python-certbot-nginx
+- sudo certbot --nginx
+- csc466-server.baxtergroup.io
+- 

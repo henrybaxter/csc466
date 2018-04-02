@@ -1,0 +1,154 @@
+HAR
+
+- want to understand HAR, referenced in the paper
+- first found the HAR analyzer https://toolbox.googleapps.com/apps/har_analyzer/
+- followed instructions to generate har file for Chrome
+- analyzed with the har analyzer
+- noting it's just JSON, opened in sublime
+- in sublime https://www.dropbox.com/s/n6hyxa0et4vpgdo/Screenshot%202018-02-13%2012.38.02.png?dl=0
+- found https://pypi.python.org/pypi/haralyzer/1.4.11 to ease parsing
+- documentation at http://pythonhosted.org/haralyzer/
+- ok how about generating HAR files programmatically?
+- https://github.com/cyrus-and/chrome-har-capturer
+- uses https://github.com/cyrus-and/chrome-remote-interface
+- turns out there is an interface https://github.com/ChromeDevTools/awesome-chrome-devtools#chrome-devtools-protocol
+- https://chromedevtools.github.io/devtools-protocol/
+- also note for python https://github.com/ChromeDevTools/awesome-chrome-devtools and https://github.com/wasiher/chrome_remote_interface_python though could just write directly against API
+- so i will stop here, and move to QUIC and 'normal' HTTP server on EC2
+
+AWS
+
+- login using
+https://102813312095.signin.aws.amazon.com/console
+henrybaxter
+k(;b{TXR(MKCM3Rs
+us-west-2
+- created new shared public/private key pair 'shared' and shared with liam
+- saved as ~/Dropbox/school/csc466-shared.pem
+- booted new ubuntu 16.04 amd64 t2.micro ec2 instance
+- added new security group webserver with 22, 80, 443 tcp/ip open to the world
+- associated elastic ip 52.33.172.103 with new server
+- added following to ~/.ssh/config
+Host csc466
+        HostName 52.33.172.103
+        User ubuntu
+        IdentityFile ~/Dropbox/school/csc466-shared.pem
+- and logged into server
+me:~ $ chmod 600 ~/Dropbox/school/csc466-shared.pem
+me:~ $ ssh csc466
+- updated server (sudo apt-get update && sudo apt-get upgrade)
+- rebooted server (sudo reboot)
+- installed & configured nginx:
+sudo apt-get nginx
+- checked that http://52.33.172.103/ works, yes
+- https does not, let's setup domain name and ssl LATER with letsencrypt if necessary
+- let's try cross compiling chromium (and thus quic server) for linux
+me:~ $ cd ~/projects/chromium/src
+me:src $ mkdir out/Linux
+me:src $ gn gen out/Linux --args='target_os="linux" target_cpu="x64"'
+Missing sysroot (//build/linux/debian_stretch_amd64-sysroot)
+- ok need to get ready for cross compile with
+me:src $ build/linux/sysroot_scripts/install-sysroot.py --arch=amd64
+- try again
+me:src $ gn gen out/Linux --args='target_os="linux" target_cpu="x64"'
+me:src $ ninja -C out/Linux chrome
+ninja: Entering directory `out/Linux'
+ninja: error: obj/content/browser/browser.ninja:2: lexing error
+- ok, and googling does not help, but on inspection clearly the argument is wrong:
+-DATK_LIB_DIR=\"\[\[\],\[\],\[\],\[\],\[\]\]\
+\"
+- so start simultaneously compiling directly on ec2 server and searching for solutions
+- on ec2 server:
+~$ git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+~$ vim ~/.bash_profile
+export PATH="$PATH:~/depot_tools"
+:wq
+~$ mkdir chromium && cd chromium
+~/chromium$ fetch --nohooks --no-history chromium
+/home/ubuntu/depot_tools/fetch: line 8: exec: python: not found
+- ok install python (2.7 used by depot tools) and fetch again
+~/chromium$ sudo apt-get install python
+~/chromium$ fetch --nohooks --no-history chromium
+- going to take too long - use screen
+screen -S build
+~/chromium$ rm -rf src
+~/chromium$ rm .gclient
+~/chromium$ fetch --nohooks --no-history chromium
+- server filled to capacity (8gb) so starting again
+- cannot request more without going over free usage tier - check with liam if i can delete a server
+- yes i can
+- deleted and requested new server with 30gb of space (the max allowed under free tier)
+- associated with same elastic ip address 52.33.172.103
+- authentication issues
+- wrong server image (mistake), start again
+- same system update & get started compiling chrome as above
+- fetch finished with space as follows
+ubuntu@ip-172-31-25-33:~$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            488M     0  488M   0% /dev
+tmpfs           100M  3.2M   96M   4% /run
+/dev/xvda1       30G   11G   19G  38% /
+tmpfs           496M     0  496M   0% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           496M     0  496M   0% /sys/fs/cgroup
+tmpfs           100M     0  100M   0% /run/user/1000
+- now
+~/chromium/src$ ./build/install-build-deps.sh
+- now at 14G used
+- run hooks
+~/chromium/src$ gclient runhooks
+- error on binutils download, see https://groups.google.com/a/chromium.org/forum/#!topic/chromium-dev/yWQUF8lqiws
+- fixed ~/.bash_profile with export PATH="$PATH:${HOME}/depot_tools"
+- rerun
+~/chromium/src/$ gclient runhooks
+- gini
+~/chromium/src$ gn gen out/Default
+- now build
+~/chromium/src$ ninja -C out/Default chrome
+- now read the fine print - need 100GB of space to build, and we have 30GB, this probably won't work
+- deleted out/Default and to see if it might help:
+~/chromium/src$ gn gen out/Default
+~/chromium/src$ gn args out/Default
+is_debug = false
+symbol_level = 0
+enable_nacl = false
+remove_webcore_debug_symbols=true
+~/chromium/src$ ninja -C out/Default quic_server quic_client
+- note at 17gb used and 13gb free at this point
+- success! didn't time it unfortunately
+- create example site
+mkdir ~/quic-data && cd ~/quic-data
+wget -p --save-headers https://www.example.org
+vim ~/quic-data/www.example.org/index.html
+X-Original-Url: https://www.example.org/
+- create certificate
+~/chromium/src$ cd net/tools/quic/certs && ./generate-certs.sh && cd -
+- create run-quic-server.sh:
+./out/Default/quic_server \
+        --quic_response_cache_dir=/tmp/quic-data/www.example.org \
+        --certificate_file=/home/ubuntu/chromium/src/net/tools/quic/certs/out/leaf_cert.pem \
+        --key_file=/home/ubuntu/chromium/src/net/tools/quic/certs/out/leaf_cert.pkcs8 \
+        --v=2
+- create run-quic-client.sh:
+./out/Default/quic_client --host=127.0.0.1 --port=6121 https://www.example.org/
+- cert invalid (not trusted by root) so install cert management tool:
+sudo apt-get install libnss3-tools
+- need to trust root CA at net/tools/quic/certs/out/2048-sha256-root.pem
+~/chromium/src$ certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n quicserver \
+-i net/tools/quic/certs/out/2048-sha256-root.pem
+- run server
+~/chromium/src$ ./run-quic-server.sh
+- in a separate terminal/screen (eg open second terminal and ssh csc466)
+~/chromium/src$ ./run-quic-client.sh
+- works, ok now try doing a quic request on the big bad internet, first need the root CA on local machine
+scp csc466:~/chromium/src/net/tools/quic/certs/out/2048-sha256-root.pem .
+- now add it to root on local machine
+- create run-quic-client.sh on local machine:
+./out/Default/quic_client --host=52.33.172.103 --port=443 https://www.example.or
+g/
+- notice port is different, modify server run-quic-server.sh as well
+- configure webserver security group rule to allow UDP traffic (not just TCP!)
+me:src$ ./run-quic-server.sh
+...
+Request succeeded (200)
+- success! we have a quic server available over the Internet

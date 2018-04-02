@@ -1,0 +1,3 @@
+- meet with Liam online at 12:30
+- also start working on instrumenting the code
+- add new severity level QUIC, beyond fatal

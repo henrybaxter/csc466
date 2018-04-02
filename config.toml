@@ -1,25 +1,42 @@
-host = "www.example.org"
+host = "https://csc466-router.baxtergroup.io"
 
-# Mbps
-rate-limits = [1, 5, 10]
+# tc qdisc ceil in mbit
+rate-limit = 1000.0
+rate-limits = [0.1, 1.0, 5.0, 10.0]
 
-# ms
-extra-delay = [0, 50, 100]
+# tc qdisc latency in ms
+latency = 0
+latencies = [0, 50, 100, 500, 1000]
 
-# %
-extra-loss = [0.1, 1.0]
+# tc qdisc netem loss in %
+packet-loss = 0.0
+packet-losses = [0.0, 0.1, 1.0, 3.0]
 
-# on page
-number-objects = [1, 2, 5, 10,0, 200]
+# images on page
+object-count = 2
+object-counts = [0, 1, 2, 5, 10,0, 200]
 
-# KB
+# size of images on page
+object-size = 100
 object-sizes = [5, 10, 100]
 
-# seconds
-page-load-timeout = 120
+# time to wait for a single page request
+# (may incorporate multiple subrequests for dependent objects)
+page-load-timeout = 60
+
+webroot = 'root'
+
+
+
+# Currently this is run manually and separately, so these options are not in use:
+
+# Chrome location
+chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
 # Chrome options
 chrome-options = [
+	"--disable-gpu",
+	"--remote-debugging-port=9922",
 	"--no-first-run",
 	"--disable-background-networking",
 	"--disable-client-side-phishing-detection",
@@ -36,7 +53,8 @@ chrome-options = [
 	"--use-mock-keychain",
 	"--ignore-certificate-errors",
 	"--enable-benchmarking",
-	"--enable-net-benchmarking"
+	"--enable-net-benchmarking",
+	"--headless"
 ]
 
 

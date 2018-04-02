@@ -1,0 +1,21 @@
+#!/bin/bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+    --disable-gpu \
+    --remote-debugging-port=9222 \
+    --no-first-run \
+    --disable-background-networking \
+    --disable-client-side-phishing-detection \
+    --disable-component-update \
+    --disable-default-apps \
+    --disable-hang-monitor \
+    --disable-popup-blocking \
+    --disable-prompt-on-repost \
+    --disable-sync \
+    --disable-web-resources \
+    --metrics-recording-only \
+    --password-store=basic \
+    --safebrowsing-disable-auto-update \
+    --use-mock-keychain \
+    --enable-benchmarking \
+    --enable-net-benchmarking \
+    --headless

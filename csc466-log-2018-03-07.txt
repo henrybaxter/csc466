@@ -1,0 +1,55 @@
+we need:
+
+to run against the tcp server and against the quic server
+
+we need to generate headless chrome captures
+
+1. write code or run simple command to generate HAR capture of a specific page
+
+- try
+$ chrome --headless --disable-gpu --remote-debugging-port=9222 https://www.chromestatus.com
+- obviously not the Mac path, create alias
+- vim ~/.bash_profile
+alias chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+- source ~/.bash_profile
+- try again
+$ chrome --headless --disable-gpu --remote-debugging-port=9222 https://www.chromestatus.com
+[0307/063528.391394:ERROR:instance.cc(49)] Unable to locate service manifest for metrics
+[0307/063528.391500:ERROR:service_manager.cc(890)] Failed to resolve service name: metrics
+[0307/063528.391512:ERROR:gpu_process_transport_factory.cc(1009)] Lost UI shared context.
+
+DevTools listening on ws://127.0.0.1:9222/devtools/browser/fc93cd28-c04d-4a2e-8386-cba1e75118e9
+
+- ok so chrome-har-capturer
+
+
+1. generate HAR for multiple site options on HTTP/2 and QUIC
+2. compare side-by-side somehow
+
+for network emulation, use remote ec2 server as proxy
+
+slides, talking points, network emulation
+
+write python script that does it
+use a TOML file for configuration
+use options for transient choices and/or overrides
+another ec2 server as the proxy? need to use it as a router of some kind? need to route traffic to the other ec2 server
+
+use baxterholdings dns?
+hardcoded dns
+
+ok so then how do you do the multiple tc scenarios? you have to contact the server
+
+
+
+1. generate HAR captures automatically
+ - dimensions are:
+    number of objects (choose average)
+    size of objects (choose average)
+    rate limits (choose none)
+    extra delay (choose none)
+    extra loss (choose none)
+    tcp/quic (both)
+    run N times per scenario
+2. generate smooth charts
+3. create slides
