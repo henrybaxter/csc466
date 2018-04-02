@@ -127,6 +127,8 @@ def execute_request(chrome, url):
         chrome.Runtime.evaluate(expression=func)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired', timeout=60)
+    #pprint.pprint(evt)
+    #pprint.pprint(payload)
     requestWillBeSent = payload[1]
     assert requestWillBeSent['method'] == 'Network.requestWillBeSent', requestWillBeSent['method']
     loadEventFired = payload[-1]
@@ -139,20 +141,20 @@ def execute_request(chrome, url):
 
 def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
-    stdin, stdout, stderr = router.exec_command(
-        './csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
-    )
+    command = './csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
+    logger.info('Running on router: %s', command)
+    stdin, stdout, stderr = router.exec_command(command)
     logger.debug('Set router, output was\n%s', stdout.read().decode('utf-8'))
     # ok now that we have setup the router, what about the server?
     # what about the url? we assume a url structure on the other side
     # of object-counte--object-size--page.html
     url = urljoin(
         config['host'],
-        'page-{object-count}-{object-count}kb.html'.format(**treatment)
+        'page-{object-count}-{object-size}kb.html'.format(**treatment)
     )
     logger.info('Requesting page {}'.format(url))
     results = []
-    for i in range(10):
+    for i in range(config['iterations']):
         results.append(execute_request(chrome, url))
     return results
 
@@ -164,8 +166,10 @@ def main():
     chrome = PyChromeDevTools.ChromeInterface()
     chrome.Network.enable()
     chrome.Page.enable()
-    results = run_treatment(config, router, chrome, treatments[0])
-    print(results)
+    for treatment in treatments:
+        treatment['results'] = run_treatment(config, router, chrome, treatment)
+        pprint.pprint(treatment['results'])
+    pprint.pprint(treatments)
 
 
 if __name__ == '__main__':
