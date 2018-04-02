@@ -16,10 +16,12 @@ def main():
             raise
     template = Template(open('templates/page.html').read())
     urls = []
+    print(config)
     for cnt in config['object-counts']:
         for size in config['object-sizes']:
-            name = '{} objects of size {}kb'.format(size, cnt)
-            path = 'page-{}-{}kb.html'.format(size, cnt)
+            name = '{} objects of size {}kb'.format(cnt, size)
+            print(cnt, size)
+            path = 'page-{}-{}kb.html'.format(cnt, size)
             urls.append((name, path))
             context = {
                 'images': [{
