@@ -126,7 +126,7 @@ def execute_request(chrome, url):
     for func in funcs:
         chrome.Runtime.evaluate(expression=func)
     chrome.Page.navigate(url=url)
-    evt, payload = chrome.wait_event('Page.loadEventFired', timeout=60)
+    evt, payload = chrome.wait_event('Page.loadEventFired')
     #pprint.pprint(evt)
     #pprint.pprint(payload)
     requestWillBeSent = payload[1]
@@ -141,10 +141,13 @@ def execute_request(chrome, url):
 
 def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
-    command = './csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
+    command = 'sudo ./csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
     logger.info('Running on router: %s', command)
     stdin, stdout, stderr = router.exec_command(command)
-    logger.debug('Set router, output was\n%s', stdout.read().decode('utf-8'))
+    retcode = stdout.channel.recv_exit_status()
+    if retcode:
+        logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
+        sys.exit(1)
     # ok now that we have setup the router, what about the server?
     # what about the url? we assume a url structure on the other side
     # of object-counte--object-size--page.html
@@ -163,7 +166,7 @@ def main():
     config = parse_args()
     treatments = generate_treatments(config)
     router = ssh_connection('csc466-router')
-    chrome = PyChromeDevTools.ChromeInterface()
+    chrome = PyChromeDevTools.ChromeInterface(timeout=config['page-load-timeout'])
     chrome.Network.enable()
     chrome.Page.enable()
     for treatment in treatments:
