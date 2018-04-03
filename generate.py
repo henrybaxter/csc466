@@ -1,6 +1,5 @@
 import shutil
 import pprint
-import random
 from os.path import join
 import os
 import sys
@@ -24,11 +23,11 @@ def main():
     page = Template(open('templates/page.html').read())
     header = Template(open('templates/headers').read())
     index = Template(open('templates/index.html').read())
-    available_sizes = [int(re.search('(\d+)k\.jpeg', img).group(1)) for img in os.listdir('images/')]
-    missing = set(config['object-sizes']) - set(available_sizes)
-    if missing:
-        print('Missing the following image sizes:', ', '.join(str(m) for m in missing))
-        sys.exit(1)
+    #available_sizes = [int(re.search('(\d+)k\.jpeg', img).group(1)) for img in os.listdir('images/')]
+    #missing = set(config['object-sizes']) - set(available_sizes)
+    #if missing:
+    #    print('Missing the following image sizes:', ', '.join(str(m) for m in missing))
+    #    sys.exit(1)
     for protocol in ['tcp', 'quic']:
         urls = []
         root = '{}-root'.format(protocol)
@@ -46,10 +45,16 @@ def main():
                 name = '{} objects of size {}kb'.format(cnt, size)
                 path = 'page-{}-{}k.html'.format(cnt, size)
                 urls.append((name, path))
+                img_in = join(root, 'images', '{}k.jpeg'.format(size))
+                images = []
+                for i in range(cnt):
+                    img_out = join(root, 'images', '{}k-{}.jpeg'.format(size, i))
+                    images.append('images/{}k-{}.jpeg'.format(size, i))
+                    shutil.copy(img_in, img_out)
                 context = {
                     'images': [{
-                        'url': 'images/{}k.jpeg?rnd={}'.format(size, random.random())
-                    } for i in range(cnt)],
+                        'url': img
+                    } for img in images],
                     'title': 'Test {} images of size {}kb'.format(cnt, size),
                     'protocol': protocol
                 }

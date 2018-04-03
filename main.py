@@ -173,7 +173,7 @@ def ssh_connection(host):
 
 def execute_request(chrome, url):
     logger.info('Executing request for {}'.format(url))
-    url += '?random={}'.format(random.random())
+    # url += '?random={}'.format(random.random())
     funcs = [
         'chrome.benchmarking.clearCache()',
         'chrome.benchmarking.clearHostResolverCache()',
@@ -228,6 +228,7 @@ def run_treatment(config, router, chrome, treatment):
         results.append(execute_request(chrome, url))
     x = np.array(results)
     print(x)
+    plt.figure()
     sns.distplot(x)
     plt.savefig(os.path.join('plots', stringify(treatment) + '.png'))
     return results
