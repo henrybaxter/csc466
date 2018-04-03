@@ -53,6 +53,7 @@ def main():
                     'title': 'Test {} images of size {}kb'.format(cnt, size)
                 }
                 out_path = join(root, path)
+                url = urljoin(config['host'], path)
                 with open(out_path, 'w') as ofp:
                     if protocol == 'quic':
                         ofp.write(header.render({'content_type': 'text/html', 'url': url}))
