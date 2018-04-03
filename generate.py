@@ -58,6 +58,7 @@ def main():
                     if protocol == 'quic':
                         ofp.write(header.render({'content_type': 'text/html', 'url': url}))
                     ofp.write(page.render(context))
+        url = urljoin(config['host'], 'index.html')
         with open(join(root, 'index.html'), 'w') as ofp:
             if protocol == 'quic':
                 ofp.write(header.render({'content_type': 'text/html', 'url': url}))
