@@ -48,7 +48,7 @@ def main():
                 urls.append((name, path))
                 context = {
                     'images': [{
-                        'url': 'images/{}k.jpg?rnd={}'.format(size, random.random())
+                        'url': 'images/{}k.jpeg?rnd={}'.format(size, random.random())
                     } for i in range(cnt)],
                     'title': 'Test {} images of size {}kb'.format(cnt, size)
                 }
