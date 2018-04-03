@@ -39,7 +39,7 @@ def main():
             contents = open(in_path, 'rb').read()
             with open(out_path, 'wb') as ofp:
                 if protocol == 'quic':
-                    ofp.write(header.render({'content_type': 'image/jpeg', 'url': url, 'protocol': protocol}).encode('utf-8'))
+                    ofp.write(header.render({'content_type': 'image/jpeg', 'url': url}).encode('utf-8'))
                 ofp.write(contents)
         for cnt in config['object-counts']:
             for size in config['object-sizes']:
@@ -50,7 +50,8 @@ def main():
                     'images': [{
                         'url': 'images/{}k.jpeg?rnd={}'.format(size, random.random())
                     } for i in range(cnt)],
-                    'title': 'Test {} images of size {}kb'.format(cnt, size)
+                    'title': 'Test {} images of size {}kb'.format(cnt, size),
+                    'protocol': protocol
                 }
                 out_path = join(root, path)
                 url = urljoin(config['host'], path)
@@ -61,8 +62,8 @@ def main():
         url = urljoin(config['host'], 'index.html')
         with open(join(root, 'index.html'), 'w') as ofp:
             if protocol == 'quic':
-                ofp.write(header.render({'content_type': 'text/html', 'url': url, 'protocol': protocol}))
-            ofp.write(index.render({'urls': urls}))
+                ofp.write(header.render({'content_type': 'text/html', 'url': url}))
+            ofp.write(index.render({'urls': urls, 'protocol': protocol}))
 
 
 if __name__ == '__main__':
