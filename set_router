@@ -25,9 +25,9 @@ modprobe ifb numifbs=1
 
 # cleanup
 echo 'Cleaning up old qdisc information'
-tc qdisc del dev eth0 handle ffff: ingress
-tc qdisc del dev eth0 root
-tc qdisc del dev ifb0 root
+tc qdisc del dev eth0 handle ffff: ingress || true
+tc qdisc del dev eth0 root || true
+tc qdisc del dev ifb0 root || true
 ip link set dev ifb0 down
 
 echo 'Bringing up virtual ifb'
