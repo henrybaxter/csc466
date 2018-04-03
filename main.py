@@ -1,4 +1,6 @@
 import random
+import json
+import csv
 import sys
 import time
 import argparse
@@ -9,15 +11,23 @@ import subprocess
 import pprint
 from urllib.parse import urljoin, urlparse
 
+import matplotlib
+matplotlib.use('TKAgg')
+import matplotlib.pylab as plt
 import PyChromeDevTools
 import toml
 import paramiko
+import numpy as np
+import seaborn as sns
 
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
 DIR = os.path.dirname(__file__)
+
+def stringify(treatment):
+    return '{protocol}-{object-count}n-{object-size}k-{rate-limit}mbit-{packet-loss}%-{latency}ms'.format(**treatment)
 
 
 def parse_args():
@@ -79,7 +89,8 @@ def generate_treatments(config):
             for value in config[dimensions[vdim][1]]:
                 treatment = {
                     'protocol': protocol,
-                    varying: value
+                    varying: value,
+                    'varying': varying
                 }
                 # collect all the constants
                 for cdim in range(len(dimensions)):
@@ -110,7 +121,7 @@ def start_chrome(config, protocol):
         ])
     logger.info('Launching chrome for {}:\n%s'.format(protocol), pprint.pformat(command))
     command += config['chrome-options']
-    print(' '.join(command))
+    # print(' '.join(command))
     return subprocess.Popen(command)
 
 
@@ -122,7 +133,7 @@ def start_chromes(config):
     #time.sleep(config['chrome-startup-delay'])
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
-        print(protocol, port)
+        # print(protocol, port)
         chromes[protocol] = {}
         chromes[protocol]['interface'] = PyChromeDevTools.ChromeInterface(
             timeout=config['page-load-timeout'],
@@ -171,9 +182,18 @@ def execute_request(chrome, url):
     ]
     for func in funcs:
         res = chrome.Runtime.evaluate(expression=func)
-        print(res)
+        logger.debug(res)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
+    responsesReceived = []
+    for p in payload:
+        if p['method'] == 'Network.responseReceived':
+            responsesReceived.append(p['params']['response'])
+    print(len(responsesReceived), 'responses received')
+    for i, resp in enumerate(responsesReceived):
+        print(resp['protocol'])
+        print(resp['timing'])
+    return responsesReceived[0]['timing']['receiveHeadersEnd']
     #pprint.pprint(evt)
     pprint.pprint(payload)
     requestWillBeSent = payload[1]
@@ -206,11 +226,20 @@ def run_treatment(config, router, chrome, treatment):
     results = []
     for i in range(config['iterations']):
         results.append(execute_request(chrome, url))
+    x = np.array(results)
+    print(x)
+    sns.distplot(x)
+    plt.savefig(os.path.join('plots', stringify(treatment) + '.png'))
     return results
 
 
 def main():
     config = parse_args()
+    try:
+        shutil.rmtree('plots')
+    except FileNotFoundError:
+        pass
+    os.makedirs('plots')
     chromes = start_chromes(config)
     treatments = generate_treatments(config)
     router = ssh_connection('csc466-router')
@@ -219,6 +248,34 @@ def main():
         treatment['results'] = run_treatment(config, router, chrome, treatment)
         pprint.pprint(treatment['results'])
     pprint.pprint(treatments)
+    with open('data.json', 'w') as ofp:
+        json.dump(treatments, ofp)
+    with open('data.csv', 'w') as ofp:
+        fieldnames = list(treatments[0].keys()) + ['page-load-time']
+        fieldnames.remove('results')
+        writer = csv.DictWriter(ofp, fieldnames=fieldnames)
+        writer.writeheader()
+        rows = []
+        for treatment in treatments:
+            for result in treatment['results']:
+                row = treatment.copy()
+                row.pop('results')
+                row['page-load-time'] = result
+                rows.append(row)
+        writer.writerows(rows)
+    with open('summary.csv', 'w') as ofp:
+        fieldnames = list(treatments[0].keys()) + ['page-load-time-mean', 'page-load-time-stdev']
+        fieldnames.remove('results')
+        writer = csv.DictWriter(ofp, fieldnames=fieldnames)
+        writer.writeheader()
+        rows = []
+        for treatment in treatments:
+            row = treatment.copy()
+            row.pop('results')
+            row['page-load-time-mean'] = np.mean(treatment['results'])
+            row['page-load-time-stdev'] = np.std(treatment['results'])
+            rows.append(row)
+        writer.writerows(rows)
 
 
 if __name__ == '__main__':

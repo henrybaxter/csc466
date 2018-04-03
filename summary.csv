@@ -1,0 +1,5 @@
+protocol,latency,varying,rate-limit,packet-loss,object-count,object-size,page-load-time-mean,page-load-time-stdev
+quic,0,latency,10.0,0.0,0,100,107.519240001,12.0218141786
+quic,50,latency,10.0,0.0,0,100,207.15583,5.36415762039
+tcp,0,latency,10.0,0.0,0,100,287.356210001,8.75957075498
+tcp,50,latency,10.0,0.0,0,100,587.7609,13.816564065

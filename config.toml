@@ -2,23 +2,23 @@ host = "https://csc466-router.baxtergroup.io"
 
 # tc qdisc ceil in mbit
 rate-limit = 10.0
-rate-limits = [10.0] # 0.1, 1.0, 10.0]
+rate-limits = [] # 0.1, 1.0, 10.0]
 
 # tc qdisc latency in ms
 latency = 0
-latencies = [0, 100] #, 100, 1000]
+latencies = [0, 50] #, 100, 1000]
 
 # tc qdisc netem loss in %
 packet-loss = 0.0
-packet-losses = [0.0, 30.0] #, 1.0, 10.0]
+packet-losses = [] #, 1.0, 10.0]
 
 # images on page
 object-count = 0
-object-counts = [0] #, 1, 2]
+object-counts = [] #, 1, 2]
 
 # size of images on page
 object-size = 100
-object-sizes = [100]
+object-sizes = []
 
 available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000]
 
@@ -27,7 +27,7 @@ available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000]
 page-load-timeout = 60
 
 # number of times to repeat each test (sample size)
-iterations=  5
+iterations = 100
 
 # Currently this is run manually and separately, so these options are not in use:
 
