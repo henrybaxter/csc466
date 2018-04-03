@@ -1,5 +1,5 @@
 toml
-PyChromeDevTools
+git+git://github.com/marty90/PyChromeDevTools.git
 paramiko
 Jinja2
 seaborn
