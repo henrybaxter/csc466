@@ -20,14 +20,11 @@ object-counts = [0, 1, 2]
 object-size = 100
 object-sizes = [100]
 
-available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000, 210000]
+available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000]
 
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
-
-tcp-root = 'tcp-root'
-quic-root = 'quic-root'
 
 # number of times to reepeat each test (sample size)
 iterations=  10
