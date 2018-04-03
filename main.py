@@ -1,3 +1,4 @@
+import random
 import sys
 import time
 import argparse
@@ -104,12 +105,32 @@ def start_chrome(config, protocol):
     ]
     if protocol == 'quic':
         command.extend([
-            '--origin-to-force-quic-on=' + urlparse(config['host']).netloc
-
+            '--enable-quic',
+            '--origin-to-force-quic-on=' + urlparse(config['host']).netloc + ':443'
         ])
     logger.info('Launching chrome for {}:\n%s'.format(protocol), pprint.pformat(command))
-    command += config['chrome-options']   
+    command += config['chrome-options']
+    print(' '.join(command))
     return subprocess.Popen(command)
+
+
+def start_chromes(config):
+    # os.system('killall "Google Chrome"')
+    chromes = {}
+    #for protocol in ['quic', 'tcp']:
+    #    chromes[protocol] = {'process': start_chrome(config, protocol)}
+    #time.sleep(config['chrome-startup-delay'])
+    for protocol in ['quic', 'tcp']:
+        port = config['{}-debugging-port'.format(protocol)]
+        print(protocol, port)
+        chromes[protocol] = {}
+        chromes[protocol]['interface'] = PyChromeDevTools.ChromeInterface(
+            timeout=config['page-load-timeout'],
+            port=port
+        )
+        chromes[protocol]['interface'].Network.enable()
+        chromes[protocol]['interface'].Page.enable()
+    return chromes
 
 
 def ssh_connection(host):
@@ -141,6 +162,7 @@ def ssh_connection(host):
 
 def execute_request(chrome, url):
     logger.info('Executing request for {}'.format(url))
+    url += '?random={}'.format(random.random())
     funcs = [
         'chrome.benchmarking.clearCache()',
         'chrome.benchmarking.clearHostResolverCache()',
@@ -148,11 +170,12 @@ def execute_request(chrome, url):
         'chrome.benchmarking.closeConnections()'
     ]
     for func in funcs:
-        chrome.Runtime.evaluate(expression=func)
+        res = chrome.Runtime.evaluate(expression=func)
+        print(res)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
     #pprint.pprint(evt)
-    #pprint.pprint(payload)
+    pprint.pprint(payload)
     requestWillBeSent = payload[1]
     assert requestWillBeSent['method'] == 'Network.requestWillBeSent', requestWillBeSent['method']
     loadEventFired = payload[-1]
@@ -163,7 +186,7 @@ def execute_request(chrome, url):
     return elapsed
 
 
-def run_treatment(config, router, chromes, treatment):
+def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
     command = 'sudo ./csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
     logger.info('Running on router: %s', command)
@@ -174,7 +197,7 @@ def run_treatment(config, router, chromes, treatment):
         sys.exit(1)
     # ok now that we have setup the router, what about the server?
     # what about the url? we assume a url structure on the other side
-    # of object-counte--object-size--page.html
+    # of object-count--object-size--page.html
     url = urljoin(
         config['host'],
         'page-{object-count}-{object-size}k.html'.format(**treatment)
@@ -182,25 +205,9 @@ def run_treatment(config, router, chromes, treatment):
     logger.info('Requesting page {}'.format(url))
     results = []
     for i in range(config['iterations']):
-        results.append(execute_request(chromes[treatment['protocol']], url))
+        results.append(execute_request(chrome, url))
     return results
 
-
-def start_chromes(config):
-    os.system('killall "Google Chrome"')
-    chromes = {}
-    for protocol in ['quic', 'tcp']:
-        chromes[protocol] = {'process': start_chrome(config, protocol)}
-    time.sleep(config['chrome-startup-delay'])
-    for protocol in ['quic', 'tcp']:
-        
-        chromes[protocol]['interface'] = PyChromeDevTools.ChromeInterface(
-            timeout=config['page-load-timeout'],
-            port=config['{}-debugging-port'.format(protocol)]
-        )
-        chromes[protocol]['interface'].Network.enable()
-        chromes[protocol]['interface'].Page.enable()
-    return chromes
 
 def main():
     config = parse_args()
@@ -208,7 +215,8 @@ def main():
     treatments = generate_treatments(config)
     router = ssh_connection('csc466-router')
     for treatment in treatments:
-        treatment['results'] = run_treatment(config, router, chromes, treatment)
+        chrome = chromes[treatment['protocol']]['interface']
+        treatment['results'] = run_treatment(config, router, chrome, treatment)
         pprint.pprint(treatment['results'])
     pprint.pprint(treatments)
 

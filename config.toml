@@ -2,19 +2,19 @@ host = "https://csc466-router.baxtergroup.io"
 
 # tc qdisc ceil in mbit
 rate-limit = 10.0
-rate-limits = [0.1, 1.0, 10.0]
+rate-limits = [10.0] # 0.1, 1.0, 10.0]
 
 # tc qdisc latency in ms
 latency = 0
-latencies = [0, 100, 1000]
+latencies = [0, 100] #, 100, 1000]
 
 # tc qdisc netem loss in %
 packet-loss = 0.0
-packet-losses = [0.0, 1.0, 10.0]
+packet-losses = [0.0, 30.0] #, 1.0, 10.0]
 
 # images on page
-object-count = 2
-object-counts = [0, 1, 2]
+object-count = 0
+object-counts = [0] #, 1, 2]
 
 # size of images on page
 object-size = 100
@@ -26,17 +26,17 @@ available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000]
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
 
-# number of times to reepeat each test (sample size)
-iterations=  10
+# number of times to repeat each test (sample size)
+iterations=  5
 
 # Currently this is run manually and separately, so these options are not in use:
 
 # Chrome location
 chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
-quic-debugging-port = 9921
+quic-debugging-port = 9221
 quic-user-data-dir = '/tmp/quic-user-data-dir'
-tcp-debugging-port = 9920
+tcp-debugging-port = 9220
 tcp-user-data-dir = '/tmp/tcp-user-data-dir'
 chrome-startup-delay = 2
 
@@ -57,7 +57,6 @@ chrome-options = [
 	"--password-store=basic",
 	"--safebrowsing-disable-auto-update",
 	"--use-mock-keychain",
-	"--ignore-certificate-errors",
 	"--enable-benchmarking",
 	"--enable-net-benchmarking",
 	"--headless"
