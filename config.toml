@@ -34,10 +34,15 @@ iterations=  10
 # Chrome location
 chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
+quic-debugging-port = 9921
+quic-user-data-dir = '/tmp/quic-user-data-dir'
+tcp-debugging-port = 9920
+tcp-user-data-dir = '/tmp/tcp-user-data-dir'
+chrome-startup-delay = 2
+
 # Chrome options
 chrome-options = [
 	"--disable-gpu",
-	"--remote-debugging-port=9922",
 	"--no-first-run",
 	"--disable-background-networking",
 	"--disable-client-side-phishing-detection",

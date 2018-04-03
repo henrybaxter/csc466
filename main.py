@@ -1,9 +1,12 @@
 import sys
+import time
 import argparse
 import logging
 import os
+import shutil
+import subprocess
 import pprint
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import PyChromeDevTools
 import toml
@@ -88,6 +91,27 @@ def generate_treatments(config):
     return treatments
 
 
+def start_chrome(config, protocol):
+    try:
+        shutil.rmtree(config['{}-user-data-dir'.format(protocol)])
+    except FileNotFoundError:
+        pass
+    os.makedirs(config['{}-user-data-dir'.format(protocol)])
+    command = [
+        config['chrome'],
+        '--remote-debugging-port=' + str(config['{}-debugging-port'.format(protocol)]),
+        '--user-data-dir=' + config['{}-user-data-dir'.format(protocol)]
+    ]
+    if protocol == 'quic':
+        command.extend([
+            '--origin-to-force-quic-on=' + urlparse(config['host']).netloc
+
+        ])
+    logger.info('Launching chrome for {}:\n%s'.format(protocol), pprint.pformat(command))
+    command += config['chrome-options']   
+    return subprocess.Popen(command)
+
+
 def ssh_connection(host):
     client = paramiko.SSHClient()
     client._policy = paramiko.WarningPolicy()
@@ -139,7 +163,7 @@ def execute_request(chrome, url):
     return elapsed
 
 
-def run_treatment(config, router, chrome, treatment):
+def run_treatment(config, router, chromes, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
     command = 'sudo ./csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
     logger.info('Running on router: %s', command)
@@ -158,19 +182,33 @@ def run_treatment(config, router, chrome, treatment):
     logger.info('Requesting page {}'.format(url))
     results = []
     for i in range(config['iterations']):
-        results.append(execute_request(chrome, url))
+        results.append(execute_request(chromes[treatment['protocol']], url))
     return results
 
 
+def start_chromes(config):
+    os.system('killall "Google Chrome"')
+    chromes = {}
+    for protocol in ['quic', 'tcp']:
+        chromes[protocol] = {'process': start_chrome(config, protocol)}
+    time.sleep(config['chrome-startup-delay'])
+    for protocol in ['quic', 'tcp']:
+        
+        chromes[protocol]['interface'] = PyChromeDevTools.ChromeInterface(
+            timeout=config['page-load-timeout'],
+            port=config['{}-debugging-port'.format(protocol)]
+        )
+        chromes[protocol]['interface'].Network.enable()
+        chromes[protocol]['interface'].Page.enable()
+    return chromes
+
 def main():
     config = parse_args()
+    chromes = start_chromes(config)
     treatments = generate_treatments(config)
     router = ssh_connection('csc466-router')
-    chrome = PyChromeDevTools.ChromeInterface(timeout=config['page-load-timeout'])
-    chrome.Network.enable()
-    chrome.Page.enable()
     for treatment in treatments:
-        treatment['results'] = run_treatment(config, router, chrome, treatment)
+        treatment['results'] = run_treatment(config, router, chromes, treatment)
         pprint.pprint(treatment['results'])
     pprint.pprint(treatments)
 
