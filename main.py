@@ -13,6 +13,7 @@ import time
 import PyChromeDevTools
 import toml
 import paramiko
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -215,11 +216,6 @@ def run_treatment(config, router, chrome, treatment):
     results = []
     for i in range(config['iterations']):
         results.append(execute_request(chrome, url))
-    x = np.array(results)
-    print(x)
-    plt.figure()
-    sns.distplot(x)
-    plt.savefig(os.path.join('plots', stringify(treatment) + '.png'))
     return results
 
 
