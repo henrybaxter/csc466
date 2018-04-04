@@ -10,4 +10,3 @@ Treatment load time data is aggregated, plotted, and analyzed.
 
 ### Chrome
 
-
