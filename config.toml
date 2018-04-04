@@ -6,21 +6,19 @@ rate-limits = [] # 0.1, 1.0, 10.0]
 
 # tc qdisc latency in ms
 latency = 0
-latencies = [0, 25, 50, 100, 200] #, 100, 1000]
+latencies = []
 
 # tc qdisc netem loss in %
 packet-loss = 0.0
-packet-losses = [0.0, 1.0, 10.0] #, 1.0, 10.0]
+packet-losses = []
 
 # images on page
-object-count = 0
-object-counts = [0, 1, 2]
+object-count = 2
+object-counts = [0, 1]
 
 # size of images on page
 object-size = 100
-object-sizes = [5, 10, 100, 200, 500]
-
-available-image-sizes = [5, 10, 100, 200, 500, 1000, 10000]
+object-sizes = [100, 200]
 
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)

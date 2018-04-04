@@ -1,3 +1,5 @@
+#!/bin/bash
+
 /home/ubuntu/chromium/src/out/Default/quic_server --v1 \
   --port=443 \
   --quic_response_cache_dir=/home/ubuntu/csc466/quic-root \

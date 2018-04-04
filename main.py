@@ -1,8 +1,6 @@
-import random
 import json
 import csv
 import sys
-import time
 import argparse
 import logging
 import os
@@ -10,24 +8,15 @@ import shutil
 import subprocess
 import pprint
 from urllib.parse import urljoin, urlparse
+import time
 
-import matplotlib
-matplotlib.use('TKAgg')
-import matplotlib.pylab as plt
 import PyChromeDevTools
 import toml
 import paramiko
-import numpy as np
-import seaborn as sns
 
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
-
-DIR = os.path.dirname(__file__)
-
-def stringify(treatment):
-    return '{protocol}-{object-count}n-{object-size}k-{rate-limit}mbit-{packet-loss}%-{latency}ms'.format(**treatment)
 
 
 def parse_args():
@@ -126,11 +115,11 @@ def start_chrome(config, protocol):
 
 
 def start_chromes(config):
-    # os.system('killall "Google Chrome"')
+    os.system('killall "Google Chrome"')
     chromes = {}
-    #for protocol in ['quic', 'tcp']:
-    #    chromes[protocol] = {'process': start_chrome(config, protocol)}
-    #time.sleep(config['chrome-startup-delay'])
+    for protocol in ['quic', 'tcp']:
+        chromes[protocol] = {'process': start_chrome(config, protocol)}
+    time.sleep(config['chrome-startup-delay'])
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
         # print(protocol, port)

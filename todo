@@ -1,7 +1,0 @@
-- need to stop doing too many 'defaults' when the default is in the list (remove it from the list?)
-- need to aggregate overall time for multiple responses (image timing)
-- need to make more useful charts
-- need to move charting to an external tool
-- need to add timing information
-- need to clean up log
-- need to add side traffic treatment
