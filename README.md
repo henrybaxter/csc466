@@ -47,3 +47,5 @@ Assume you have a `~/projects` directory, replace with similar
 ## QUIC Certificate
 
 Open Keychain Access and drag and drop `~/projects/csc466/2048-sha256-root.pem` into it, then right click and hit **Get Info**. Change to **Always Trust**.
+
+![Import Root CA](screenshots/import-root-ca.png?raw=true "Importing the Root CA in Keychain Access")
