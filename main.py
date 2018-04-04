@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--object-count', type=int)
     parser.add_argument('--object-size', type=int)
     parser.add_argument('--timeout', type=int)
+    parser.add_argument('--start-chrome', action='store_true')
+    parser.add_argument('--single', action='store_true')
     args = parser.parse_args()
     try:
         logger.debug('Attempting to load TOML values from %s', args.config)
@@ -57,6 +59,8 @@ def parse_args():
         config['object-sizes'] = [args.object_sizes]
     if args.timeout is not None:
         config['page-load-timeout'] = args.timeout
+    config['single'] = args.single
+    config['start-chrome'] = args.start_chrome
     logger.debug('Command line arguments parsed')
     return config
 
@@ -72,11 +76,23 @@ def generate_treatments(config):
     ]
     treatments = []
     for protocol in ['quic', 'tcp']:
-        # for each varying dimension
+        default = {
+            'protocol': protocol,
+            'varying': 'none'
+        }
+        for dim in range(len(dimensions)):
+            name = dimensions[dim][0]
+            default[name] = config[name]
+        treatments.append(default)
         for vdim in range(len(dimensions)):
             varying = dimensions[vdim][0]
+            values = config[dimensions[vdim][1]]
+            try:
+                values.remove(config[varying])
+            except ValueError:
+                pass
             # for each value in the varying dimension
-            for value in config[dimensions[vdim][1]]:
+            for value in values:
                 treatment = {
                     'protocol': protocol,
                     varying: value,
@@ -115,22 +131,25 @@ def start_chrome(config, protocol):
     return subprocess.Popen(command)
 
 
-def start_chromes(config):
+def start_chrome_processes(config):
     os.system('killall "Google Chrome"')
     chromes = {}
     for protocol in ['quic', 'tcp']:
         chromes[protocol] = {'process': start_chrome(config, protocol)}
     time.sleep(config['chrome-startup-delay'])
+
+
+def connect_chrome_interfaces(config):
+    chromes = {}
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
         # print(protocol, port)
-        chromes[protocol] = {}
-        chromes[protocol]['interface'] = PyChromeDevTools.ChromeInterface(
+        chromes[protocol] = PyChromeDevTools.ChromeInterface(
             timeout=config['page-load-timeout'],
             port=port
         )
-        chromes[protocol]['interface'].Network.enable()
-        chromes[protocol]['interface'].Page.enable()
+        chromes[protocol].Network.enable()
+        chromes[protocol].Page.enable()
     return chromes
 
 
@@ -172,10 +191,12 @@ def execute_request(chrome, url):
     ]
     for func in funcs:
         res = chrome.Runtime.evaluate(expression=func)
+        print(res)
         logger.debug(res)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
     responsesReceived = []
+    pprint.pprint(payload)
     for p in payload:
         if p['method'] == 'Network.responseReceived':
             responsesReceived.append(p['params']['response'])
@@ -221,18 +242,22 @@ def run_treatment(config, router, chrome, treatment):
 
 def main():
     config = parse_args()
+    treatments = generate_treatments(config)
     try:
         shutil.rmtree('plots')
     except FileNotFoundError:
         pass
     os.makedirs('plots')
-    chromes = start_chromes(config)
-    treatments = generate_treatments(config)
+    if config['start-chrome']:
+        start_chrome_processes(config)
+    chromes = connect_chrome_interfaces(config)
     router = ssh_connection('csc466-router')
     for treatment in treatments:
-        chrome = chromes[treatment['protocol']]['interface']
-        treatment['results'] = run_treatment(config, router, chrome, treatment)
+        treatment['results'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
         pprint.pprint(treatment['results'])
+        if config['single']:
+            logger.info('Single shot, exiting early')
+            sys.exit(0)
     pprint.pprint(treatments)
     with open('data.json', 'w') as ofp:
         json.dump(treatments, ofp)

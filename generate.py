@@ -45,7 +45,6 @@ def get_config():
 def make_page(host, protocol, page, header, cnt, size):
     name = '{} objects of size {}kb'.format(cnt, size)
     page_url = 'page-{}-{}k.html'.format(cnt, size)
-    print(cnt, size)
     img_urls = []
     if size:
         img_in = join('images', '{}k.jpeg'.format(size))

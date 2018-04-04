@@ -10,22 +10,22 @@ latencies = []
 
 # tc qdisc netem loss in %
 packet-loss = 0.0
-packet-losses = []
+packet-losses = [1.0]
 
 # images on page
 object-count = 2
-object-counts = [0, 1]
+object-counts = []
 
 # size of images on page
 object-size = 100
-object-sizes = [100, 200]
+object-sizes = [100, 200, 500]
 
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
 
 # number of times to repeat each test (sample size)
-iterations = 100
+iterations = 2
 
 # Currently this is run manually and separately, so these options are not in use:
 
@@ -56,8 +56,7 @@ chrome-options = [
 	"--safebrowsing-disable-auto-update",
 	"--use-mock-keychain",
 	"--enable-benchmarking",
-	"--enable-net-benchmarking",
-	"--headless"
+	"--enable-net-benchmarking"
 ]
 
 
