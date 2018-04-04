@@ -2,11 +2,12 @@
 
 ## Urgent
 
-- aggregate overall time for multiple responses
-- generate minimal number of treatments (only one default, and 0-0 size)
+- DONE ~aggregate overall time for multiple responses~
+- DONE ~generate minimal number of treatments (only one default, and 0-0 size)~
 
 ## Next
 
+- improve data gathering for external tool, gather starting set
 - move charting to external tool
 - make at least three standard charts
 

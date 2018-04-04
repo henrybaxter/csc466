@@ -196,17 +196,9 @@ def execute_request(chrome, url):
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
     responsesReceived = []
-    pprint.pprint(payload)
     for p in payload:
         if p['method'] == 'Network.responseReceived':
             responsesReceived.append(p['params']['response'])
-    print(len(responsesReceived), 'responses received')
-    for i, resp in enumerate(responsesReceived):
-        print(resp['protocol'])
-        print(resp['timing'])
-    return responsesReceived[0]['timing']['receiveHeadersEnd']
-    #pprint.pprint(evt)
-    pprint.pprint(payload)
     requestWillBeSent = payload[1]
     assert requestWillBeSent['method'] == 'Network.requestWillBeSent', requestWillBeSent['method']
     loadEventFired = payload[-1]
