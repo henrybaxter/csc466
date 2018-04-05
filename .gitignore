@@ -1,4 +1,5 @@
 quic-root/
 tcp-root/
 plots/
+data/
 .DS_Store

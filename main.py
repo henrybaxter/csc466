@@ -37,10 +37,10 @@ def parse_args():
         logger.debug('Attempting to load TOML values from %s', args.config)
         config = toml.load(open(args.config))
     except FileNotFoundError:
-        print('Could not find {}'.format(args.config))
+        logger.error('Could not find {}'.format(args.config))
         sys.exit(1)
     except toml.TomlDecodeError as err:
-        print('Could not read TOML file: {}'.format(err))
+        logger.error('Could not read TOML file: {}'.format(err))
         sys.exit(1)
     if args.rate_limit is not None:
         config['rate-limit'] = args.rate_limit
@@ -127,7 +127,6 @@ def start_chrome(config, protocol):
         ])
     logger.info('Launching chrome for {}:\n%s'.format(protocol), pprint.pformat(command))
     command += config['chrome-options']
-    # print(' '.join(command))
     return subprocess.Popen(command)
 
 
@@ -143,7 +142,6 @@ def connect_chrome_interfaces(config):
     chromes = {}
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
-        # print(protocol, port)
         chromes[protocol] = PyChromeDevTools.ChromeInterface(
             timeout=config['page-load-timeout'],
             port=port
@@ -161,7 +159,7 @@ def ssh_connection(host):
     ssh_config = paramiko.SSHConfig()
     user_config_file = os.path.expanduser("~/.ssh/config")
     if not os.path.exists(user_config_file):
-        print('Could not find ssh config {}'.format(user_config_file))
+        logger.error('Could not find ssh config {}'.format(user_config_file))
         sys.exit(1)
     logger.info('Found SSH config file')
     with open(user_config_file) as f:
@@ -234,9 +232,14 @@ def run_treatment(config, router, chrome, treatment):
 
 
 def save_treatments(treatments):
-    with open('data.json', 'w') as ofp:
+    try:
+        shutil.rmtree('data')
+    except FileNotFoundError:
+        pass
+    os.makedirs('data')
+    with open('data/data.json', 'w') as ofp:
         json.dump(treatments, ofp)
-    with open('data.csv', 'w') as ofp:
+    with open('data/data.csv', 'w') as ofp:
         fieldnames = list(treatments[0].keys()) + ['page-load-time']
         fieldnames.remove('results')
         writer = csv.DictWriter(ofp, fieldnames=fieldnames)
@@ -249,7 +252,7 @@ def save_treatments(treatments):
                 row['page-load-time'] = result
                 rows.append(row)
         writer.writerows(rows)
-    with open('summary.csv', 'w') as ofp:
+    with open('data/summary.csv', 'w') as ofp:
         fieldnames = list(treatments[0].keys()) + ['page-load-time-mean', 'page-load-time-stdev']
         fieldnames.remove('results')
         writer = csv.DictWriter(ofp, fieldnames=fieldnames)
@@ -265,19 +268,25 @@ def save_treatments(treatments):
 
 
 def main():
+    absolute_start = time.time()
     config = parse_args()
     treatments = generate_treatments(config)
     if config['start-chrome']:
         start_chrome_processes(config)
     chromes = connect_chrome_interfaces(config)
     router = ssh_connection('csc466-router')
-    for treatment in treatments:
+    elapsed = time.time() - absolute_start
+    logger.info('Took {:.1f} seconds to prepare for treatments'.format(elapsed))
+    start = time.time()
+    for i, treatment in enumerate(treatments):
         treatment['results'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
-        pprint.pprint(treatment)
         if config['single']:
             logger.info('Single shot, exiting early')
             sys.exit(0)
-    pprint.pprint(treatments)
+        elapsed = time.time() - start
+        done = i + 1
+        predicted = (len(treatments) / done - 1) * elapsed
+        logger.info('Completed {} of {} treatments in {:.1f} seconds, estimate {:.1f} minutes left'.format(done, len(treatments), elapsed, predicted / 60))
     save_treatments(treatments)
 
 
