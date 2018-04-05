@@ -51,11 +51,11 @@ def make_page(host, protocol, page, header, cnt, size):
         img_contents = open(img_in, 'rb').read()
         for i in range(cnt):
             img_out = join(root(protocol), 'images', '{}k-{}.jpeg'.format(size, i))
-            img_url = 'images/{}k-{}.jpeg'.format(size, i)
-            img_urls.append(img_url)
+            img_rel = 'images/{}k-{}.jpeg'.format(size, i)
+            img_urls.append(img_rel)
             with open(img_out, 'wb') as ofp:
                 if protocol == 'quic':
-                    ofp.write(header.render({'content_type': 'image/jpeg', 'url': img_url}).encode('utf-8'))
+                    ofp.write(header.render({'content_type': 'image/jpeg', 'url': urljoin(host, img_rel)}).encode('utf-8'))
                 ofp.write(img_contents)
     context = {
         'images': [{
