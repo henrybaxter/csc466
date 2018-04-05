@@ -190,9 +190,10 @@ def execute_request(chrome, url):
         'chrome.benchmarking.closeConnections()'
     ]
     for func in funcs:
-        res = chrome.Runtime.evaluate(expression=func)
-        print(res)
-        logger.debug(res)
+        resp = chrome.Runtime.evaluate(expression=func)
+        if resp['result']['result']['type'] != 'undefined':
+            logger.error('Unexpected response calling %s: %s', func, resp)
+            sys.exit(1)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
     responsesReceived = []
@@ -232,25 +233,7 @@ def run_treatment(config, router, chrome, treatment):
     return results
 
 
-def main():
-    config = parse_args()
-    treatments = generate_treatments(config)
-    try:
-        shutil.rmtree('plots')
-    except FileNotFoundError:
-        pass
-    os.makedirs('plots')
-    if config['start-chrome']:
-        start_chrome_processes(config)
-    chromes = connect_chrome_interfaces(config)
-    router = ssh_connection('csc466-router')
-    for treatment in treatments:
-        treatment['results'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
-        pprint.pprint(treatment['results'])
-        if config['single']:
-            logger.info('Single shot, exiting early')
-            sys.exit(0)
-    pprint.pprint(treatments)
+def save_treatments(treatments):
     with open('data.json', 'w') as ofp:
         json.dump(treatments, ofp)
     with open('data.csv', 'w') as ofp:
@@ -279,6 +262,23 @@ def main():
             row['page-load-time-stdev'] = np.std(treatment['results'])
             rows.append(row)
         writer.writerows(rows)
+
+
+def main():
+    config = parse_args()
+    treatments = generate_treatments(config)
+    if config['start-chrome']:
+        start_chrome_processes(config)
+    chromes = connect_chrome_interfaces(config)
+    router = ssh_connection('csc466-router')
+    for treatment in treatments:
+        treatment['results'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        pprint.pprint(treatment)
+        if config['single']:
+            logger.info('Single shot, exiting early')
+            sys.exit(0)
+    pprint.pprint(treatments)
+    save_treatments(treatments)
 
 
 if __name__ == '__main__':
