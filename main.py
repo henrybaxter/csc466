@@ -15,6 +15,8 @@ import toml
 import paramiko
 import numpy as np
 
+from to_sqlite import convert_to_sqlite
+
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
@@ -179,7 +181,7 @@ def ssh_connection(host):
 
 
 def execute_request(chrome, url):
-    logger.info('Executing request for {}'.format(url))
+    logger.debug('Executing request for {}'.format(url))
     # url += '?random={}'.format(random.random())
     funcs = [
         'chrome.benchmarking.clearCache()',
@@ -194,6 +196,11 @@ def execute_request(chrome, url):
             sys.exit(1)
     chrome.Page.navigate(url=url)
     evt, payload = chrome.wait_event('Page.loadEventFired')
+    for i, p in enumerate(payload):
+        # logger.info('p %s %s', i, p['method'])
+        if p['method'] == 'Network.servedFromCache':
+            logger.error('Something was served from cache, exiting')
+            sys.exit(1)
     responsesReceived = []
     for p in payload:
         if p['method'] == 'Network.responseReceived':
@@ -224,10 +231,12 @@ def run_treatment(config, router, chrome, treatment):
         config['host'],
         'page-{object-count}-{object-size}k.html'.format(**treatment)
     )
-    logger.info('Requesting page {}'.format(url))
+    logger.info('Running {} treatments on page {}'.format(config['iterations'], url))
     results = []
     for i in range(config['iterations']):
         results.append(execute_request(chrome, url))
+        if (i+1) % (config['iterations'] // 10) == 0:
+            logger.info('Executed {} of {}'.format(i + 1, config['iterations']))
     return results
 
 
@@ -237,9 +246,10 @@ def save_treatments(treatments):
     except FileNotFoundError:
         pass
     os.makedirs('data')
-    with open('data/data.json', 'w') as ofp:
+    with open('data/treatments.json', 'w') as ofp:
         json.dump(treatments, ofp)
-    with open('data/data.csv', 'w') as ofp:
+    convert_to_sqlite()
+    with open('data/treatments.csv', 'w') as ofp:
         fieldnames = list(treatments[0].keys()) + ['page-load-time']
         fieldnames.remove('results')
         writer = csv.DictWriter(ofp, fieldnames=fieldnames)
@@ -252,7 +262,8 @@ def save_treatments(treatments):
                 row['page-load-time'] = result
                 rows.append(row)
         writer.writerows(rows)
-    with open('data/summary.csv', 'w') as ofp:
+
+    with open('data/summarized.csv', 'w') as ofp:
         fieldnames = list(treatments[0].keys()) + ['page-load-time-mean', 'page-load-time-stdev']
         fieldnames.remove('results')
         writer = csv.DictWriter(ofp, fieldnames=fieldnames)

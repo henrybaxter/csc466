@@ -7,12 +7,13 @@
 
 ## Next
 
-- improve data gathering for external tool, gather starting set
-- move charting to external tool
+- DONE ~improve data gathering for external tool, gather starting set~
+- DONE ~move charting to external tool~
 - make at least three standard charts
 
 ## Nice
 
-- cleanup log
-- add time prediction
+- DONE ~cleanup log~
+- DONE ~add time prediction~
+- DONE ~sql(lite) db of results~
 - add side traffic treatment
