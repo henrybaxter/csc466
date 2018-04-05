@@ -14,18 +14,18 @@ packet-losses = [0.0, 0.1, 1.0, 2.0]
 
 # images on page
 object-count = 5
-object-counts = [5, 10, 100, 1000]
+object-counts = [5, 10, 100, 500]
 
 # size of images on page
 object-size = 10
-object-sizes = [10, 100, 500]
+object-sizes = [10, 100, 500, 1000]
 
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
 
 # number of times to repeat each test (sample size)
-iterations = 50
+iterations = 100
 
 # Currently this is run manually and separately, so these options are not in use:
 
