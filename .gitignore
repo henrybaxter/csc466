@@ -2,4 +2,5 @@ quic-root/
 tcp-root/
 plots/
 data/
+__pycache__
 .DS_Store
