@@ -10,15 +10,15 @@ latencies = [0, 50, 100, 200]
 
 # tc qdisc netem loss in %
 packet-loss = 0.0
-packet-losses = [0.0, 0.1, 1.0, 2.0]
+packet-losses = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0]
 
 # images on page
 object-count = 5
-object-counts = [5, 10, 100, 500]
+object-counts = [5, 10, 50, 100, 500]
 
 # size of images on page
 object-size = 10
-object-sizes = [10, 100, 500, 1000]
+object-sizes = [5, 10, 100, 200, 500, 1000]
 
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
