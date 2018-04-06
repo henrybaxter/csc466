@@ -31,6 +31,16 @@ def main():
     treatments = json.load(open('data/treatments.json'))
     # if we group both protocols together, we can always compare them
     # can we find some that are equal in every other way?
+
+    # choose a dimension to vary along
+    for dim in ['latency', 'rate-limit', 'packet-loss', 'object-size', 'object-count']:
+        for t in treatments:
+            data = {}
+            if t['varying'] == dim:
+                data.setdefault(t['protocol'], []).append(t)
+            # now got it varying along, ok, now
+
+
     for i, t1 in enumerate(treatments):
         for t2 in treatments[i+1:]:
             if similar_along(t1, t2):
