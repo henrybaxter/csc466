@@ -58,7 +58,7 @@ def to_panda_dataframe(results):
     return DataFrame(dict_in)
 
 
-def bar_plots(df, out_dir):
+def bar_plots(df, environment, out_dir):
     # choose something 'varying', so regroup by 'varying', pairs...
     dimensions = [
         ('latency', 'Latency (ms)'),
@@ -69,7 +69,7 @@ def bar_plots(df, out_dir):
     ]
     for varying, label in dimensions:
         plt.figure()
-        plt.title('QUIC vs TCP: Varying {}'.format(label))
+        plt.title('QUIC vs TCP: Varying {} ({})'.format(label, environment))
         sns.barplot(x=varying, y='page-load-time', hue='protocol', data=df[(df.varying == varying) | (df.varying == 'none')])
         plt.xlabel(label)
         plt.ylabel('Page Load Time (ms)')
@@ -94,7 +94,7 @@ def main():
         os.makedirs(out_dir)
         df = to_panda_dataframe(results)
         plot_each_tcp_vs_quic(results['treatments'], out_dir)
-        bar_plots(df, out_dir)
+        bar_plots(df, environment, out_dir)
 
 
 if __name__ == '__main__':
