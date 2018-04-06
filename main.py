@@ -1,5 +1,4 @@
 import json
-import csv
 import sys
 import argparse
 import logging
@@ -13,9 +12,8 @@ import time
 import PyChromeDevTools
 import toml
 import paramiko
-import numpy as np
 
-from to_sqlite import convert_to_sqlite
+from convert_data import convert_data
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +32,8 @@ def parse_args():
     parser.add_argument('--timeout', type=int)
     parser.add_argument('--start-chrome', action='store_true')
     parser.add_argument('--single', action='store_true')
+    parser.add_argument('--environment', default=os.environ.get('CSC466ENV', 'local'))
+    parser.add_argument('--iterations', type=int)
     args = parser.parse_args()
     try:
         logger.debug('Attempting to load TOML values from %s', args.config)
@@ -44,6 +44,8 @@ def parse_args():
     except toml.TomlDecodeError as err:
         logger.error('Could not read TOML file: {}'.format(err))
         sys.exit(1)
+    if args.iterations is not None:
+        config['iterations'] = args.iterations
     if args.rate_limit is not None:
         config['rate-limit'] = args.rate_limit
         config['rate-limits'] = [args.rate_limit]
@@ -63,6 +65,7 @@ def parse_args():
         config['page-load-timeout'] = args.timeout
     config['single'] = args.single
     config['start-chrome'] = args.start_chrome
+    config['environment'] = args.environment
     logger.debug('Command line arguments parsed')
     return config
 
@@ -79,6 +82,7 @@ def generate_treatments(config):
     treatments = []
     for protocol in ['quic', 'tcp']:
         default = {
+            'environment': config['environment'],
             'protocol': protocol,
             'varying': 'none'
         }
@@ -96,6 +100,7 @@ def generate_treatments(config):
             # for each value in the varying dimension
             for value in values:
                 treatment = {
+                    'environment': config['environment'],
                     'protocol': protocol,
                     varying: value,
                     'varying': varying
@@ -240,42 +245,18 @@ def run_treatment(config, router, chrome, treatment):
     return results
 
 
-def save_treatments(treatments):
+def save_results(config, treatments):
+    root = os.path.join('data', config['environment'])
     try:
-        shutil.rmtree('data')
+        shutil.rmtree(root)
     except FileNotFoundError:
         pass
-    os.makedirs('data')
-    with open('data/treatments.json', 'w') as ofp:
-        json.dump(treatments, ofp)
-    convert_to_sqlite()
-    with open('data/treatments.csv', 'w') as ofp:
-        fieldnames = list(treatments[0].keys()) + ['page-load-time']
-        fieldnames.remove('results')
-        writer = csv.DictWriter(ofp, fieldnames=fieldnames)
-        writer.writeheader()
-        rows = []
-        for treatment in treatments:
-            for result in treatment['results']:
-                row = treatment.copy()
-                row.pop('results')
-                row['page-load-time'] = result
-                rows.append(row)
-        writer.writerows(rows)
-
-    with open('data/summarized.csv', 'w') as ofp:
-        fieldnames = list(treatments[0].keys()) + ['page-load-time-mean', 'page-load-time-stdev']
-        fieldnames.remove('results')
-        writer = csv.DictWriter(ofp, fieldnames=fieldnames)
-        writer.writeheader()
-        rows = []
-        for treatment in treatments:
-            row = treatment.copy()
-            row.pop('results')
-            row['page-load-time-mean'] = np.mean(treatment['results'])
-            row['page-load-time-stdev'] = np.std(treatment['results'])
-            rows.append(row)
-        writer.writerows(rows)
+    os.makedirs(root)
+    path = os.path.join(root, 'results.json')
+    results = config.copy()
+    results['treatments'] = treatments
+    with open(path, 'w') as ofp:
+        json.dump(results, ofp, sort_keys=True, indent=4)
 
 
 def main():
@@ -288,9 +269,18 @@ def main():
     router = ssh_connection('csc466-router')
     elapsed = time.time() - absolute_start
     logger.info('Took {:.1f} seconds to prepare for treatments'.format(elapsed))
+    results = run_treatments(config, router, chromes, treatments)
+    save_results(config, results)
+    convert_data()
+
+
+def run_treatments(config, router, chromes, treatments):
     start = time.time()
+    results = []
     for i, treatment in enumerate(treatments):
-        treatment['results'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        result = treatment.copy()
+        result['page-load-times'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        results.append(result)
         if config['single']:
             logger.info('Single shot, exiting early')
             sys.exit(0)
@@ -298,7 +288,7 @@ def main():
         done = i + 1
         predicted = (len(treatments) / done - 1) * elapsed
         logger.info('Completed {} of {} treatments in {:.1f} seconds, estimate {:.1f} minutes left'.format(done, len(treatments), elapsed, predicted / 60))
-    save_treatments(treatments)
+    return results
 
 
 if __name__ == '__main__':

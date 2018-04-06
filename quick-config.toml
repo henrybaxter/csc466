@@ -1,0 +1,62 @@
+host = "https://csc466-router.baxtergroup.io"
+
+# tc qdisc ceil in mbit
+rate-limit = 50.0
+rate-limits = []
+
+# tc qdisc latency in ms
+latency = 0
+latencies = []
+
+# tc qdisc netem loss in %
+packet-loss = 0.0
+packet-losses = []
+
+# images on page
+object-count = 5
+object-counts = []
+
+# size of images on page
+object-size = 10
+object-sizes = []
+
+# time to wait for a single page request
+# (may incorporate multiple subrequests for dependent objects)
+page-load-timeout = 60
+
+# number of times to repeat each test (sample size)
+iterations = 10
+
+# Currently this is run manually and separately, so these options are not in use:
+
+# Chrome location
+chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+
+quic-debugging-port = 9221
+quic-user-data-dir = '/tmp/quic-user-data-dir'
+tcp-debugging-port = 9220
+tcp-user-data-dir = '/tmp/tcp-user-data-dir'
+chrome-startup-delay = 2
+
+# Chrome options
+chrome-options = [
+	"--disable-gpu",
+	"--no-first-run",
+	"--disable-background-networking",
+	"--disable-client-side-phishing-detection",
+	"--disable-component-update",
+	"--disable-default-apps",
+	"--disable-hang-monitor",
+	"--disable-popup-blocking",
+	"--disable-prompt-on-repost",
+	"--disable-sync",
+	"--disable-web-resources",
+	"--metrics-recording-only",
+	"--password-store=basic",
+	"--safebrowsing-disable-auto-update",
+	"--use-mock-keychain",
+	"--enable-benchmarking",
+	"--enable-net-benchmarking"
+]
+
+
