@@ -2,7 +2,6 @@ quic-root/
 tcp-root/
 plots/
 !poster/plots
-data/
 __pycache__
 .DS_Store
 poster/build/
