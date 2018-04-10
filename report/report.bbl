@@ -1,0 +1,22 @@
+\begin{thebibliography}{1}
+
+\bibitem{Kakhki:2017:TLL:3131365.3131368}
+Arash~Molavi Kakhki, Samuel Jero, David Choffnes, Cristina Nita-Rotaru, and
+  Alan Mislove.
+\newblock Taking a long look at quic: An approach for rigorous evaluation of
+  rapidly evolving transport protocols.
+\newblock In {\em Proceedings of the 2017 Internet Measurement Conference}, IMC
+  '17, pages 290--303, New York, NY, USA, 2017. ACM.
+
+\bibitem{Langley:2017:QTP:3098822.3098842}
+Adam Langley, Alistair Riddoch, Alyssa Wilk, Antonio Vicente, Charles Krasic,
+  Dan Zhang, Fan Yang, Fedor Kouranov, Ian Swett, Janardhan Iyengar, Jeff
+  Bailey, Jeremy Dorfman, Jim Roskind, Joanna Kulik, Patrik Westin, Raman
+  Tenneti, Robbie Shade, Ryan Hamilton, Victor Vasiliev, Wan-Teh Chang, and
+  Zhongyi Shi.
+\newblock The quic transport protocol: Design and internet-scale deployment.
+\newblock In {\em Proceedings of the Conference of the ACM Special Interest
+  Group on Data Communication}, SIGCOMM '17, pages 183--196, New York, NY, USA,
+  2017. ACM.
+
+\end{thebibliography}
