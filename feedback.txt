@@ -1,0 +1,105 @@
+Aggregated Feedback:
+Feedback 1:
+	Strengths: Good explanation of what QUIC is/methodology/exp design
+
+	Weaknesses: Small graphs were difficult to read
+
+	Suggested Improvements: Testing with more network conditions(?)
+
+Feedback 2:
+	Strengths: The presentation was well organized. Detailed analysis and experimentation were conducted by the <indecipherable>. The obtained results were presented in a proper format
+
+	Weaknesses: Among the selected metrics, I didn't see any result for throughput, which is surprising. Also, not much related work (literature) were introduced(?)
+
+	Suggested Improvements: I suggest making a comparison between this work and other related work to increase the credibility of carried out
+
+Feedback 3:
+	Strengths: Definition clearly stated, experimental data also clearly indicate the difference
+
+	Weaknesses: Could be more analysis on experimental results
+
+	Suggested Improvements: The error handling for experiments(?) can be considered (network scenario, operation system, etc.)
+
+Feedback 4:
+	Strengths: Good presentation, promising experimental results
+
+	Weaknesses: It's unclear how "quic" works. Quic is developed based on UDP. Why only TCP is utilized to comparison?
+
+	Suggested Improvements: <None>
+
+Feedback 5:
+	Strengths: Build a good testbed to compare the QUIC and TCP protocol
+
+	Weaknesses: Can't see the innovation of the project
+
+	Suggested Improvements: Use QUIC and TCP to build some application and then compare
+
+Feedback 6:
+	Strengths: Detailed comparison of TCP and QUIC w.r.t. different metrics for 2 different setups, re-doing existing work
+
+	Weaknesses: A more thorough investigation of the unexpected behavior of QUIC in a cloud environment is preferred
+
+	Suggested Improvements: Looking into why QUIC's performance is inferior to TCP when you are <cut off, my guess in the amazon cloud>
+
+Feedback 7:
+	Strengths: <None>
+
+	Weaknesses: Only test 1 type of web (pie(?) reload periodically)
+
+	Suggested Improvements: <None>
+
+Feedback 8:
+	Strengths: Solid test set up, understanding of QUIC runs throughout
+
+	Weaknesses: Better analysis of cases where TCP > QUIC
+
+	Suggested Improvements: Knowledge of cases where TCP outperforms QUIC
+
+Feedback 9:
+	Strengths: Conveyed the benefit of QUIC. No need(?) SSL/TLS. Nice sample size of relevant data. Variety of packet loss %. Explained the need for low latency with security for HTTPS
+
+	Weaknesses: Didn't explain the outcome when QUIC fails the optimistic encryption. Is it still faster? Or slower?
+
+	Suggested Improvements: <None>
+
+Feedback 10:
+	Strengths: Lots of potential for customizability(?) in protocol
+
+	Weaknesses: Does not state problem this project attempts to solve
+
+	Suggested Improvements: Posterboard format can be structured neater
+
+Feedback 11:
+	Strengths: Great idea. AWS integration is a big thumbs up.
+
+	Weaknesses: It's high end idea but I feel we can have more proof of support(?)
+
+	Suggested Improvements:
+
+Feedback 12:
+	Strengths: Multiple testing platforms. Got thorough results
+
+	Weaknesses: Test environments were black-box like
+
+	Suggested Improvements: provide more analysis on results
+
+Feedback 13:
+	Strengths: Use python to build their own testing facility
+
+	Weaknesses: Use AWS, black box, no idea what was going on for their result because of AWS infrastructure
+
+	Suggested Improvements: Understand the results
+
+Feedback 14:
+	Strengths: AWS EC2 VLAN is used to deploy(?) network traffic on QUIC. Well organized on the graphs and demo
+
+	Weaknesses: Not too much comparison details between QUIC and TCP. For example, the difference of congestion control between two transport layer protocol
+
+	Suggested Improvements: Consider network tests on both QUIC and TCP with the same settings
+
+Feedback 15:
+	Strengths: Good explanation and clear concepts
+
+	Weaknesses: Evaluated 'QUIC' protocol consumers more bandwidth then TCP and HTTPS which it replacing(?) this is the one possible weakness with evaluating protocol
+
+	Suggested Improvements: If a mechanism is design which reduces flow of QUIC Protocol then it will consume less bandwidth
