@@ -167,15 +167,15 @@ QUIC is an encrypted, multiplexed, low latency protocol that was designed to imp
 \end{itemize}
 
 \begin{figure}
-\includegraphics[width=0.8\linewidth]{images/Network_diagram.png}
-\caption{Testbed Setup}
+\includegraphics[width=0.8\linewidth]{images/network_diagram.png}
+\caption{Testbed Setup for local (a) and EC2 (b)}
 \end{figure}
 
 \textbf{Organization of testbed}
 
 \begin{itemize}
 	\item Requests are routed through a \textit{router} EC2 instance
-	\item TCP and QUIC requests are handled by a \textit{server} EC2 instance
+	\item TCP via NGINX and QUIC requests are handled by a \textit{server} EC2 instance
 	\item All EC2 instances are on the same private LAN
 	\item The router forwards with iptables and shapes traffic with tc htb and qdisc
 	\item The entire process is configurable and automatic	
@@ -247,17 +247,19 @@ QUIC is an encrypted, multiplexed, low latency protocol that was designed to imp
 \begin{itemize}
 \item For all variables tested, QUIC outperforms TCP \textit{from the local client}
 \item With one exception, for very large numbers of objects, TCP is faster
+\item This may be due to poor multhreading on the QUIC test server
 \item When requesting from an EC2 instance on the same VLAN, TCP is faster
 \item This suggests that QUIC performs best for a consumer in most situations
-\item It may suggest some optimization of TCP/IP performance in VLANs for AWS, perhaps in regard to shared VMs on a physical host
+\item It may suggest some optimization of TCP/IP performance in VLANs for AWS
+\item Initial iperf tests show a 6x speed improvement in the VLAN of TCP/IP over UDP
 \end{itemize}
 
 \textbf{Next steps}
 \begin{itemize}
 	\item Further tests with iperf in the AWS cloud
+	\item Adjusting UDP buffer sizes
 	\item Side traffic tests to compare fairness
-	\item Jitter impact
-	\item Packet reordering
+	\item Jitter, packet reordering and duplication
 \end{itemize}
 
 Given the extensible and reproducible framework created, it is possible to add most of these tests with very minimal work.

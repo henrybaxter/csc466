@@ -14,3 +14,9 @@ poster/build/
 *.tex~
 *.blg
 *.synctex.gz
+*.fls
+*.toc
+*.snm
+*.out
+*.fdb_latexmk
+*.nav
