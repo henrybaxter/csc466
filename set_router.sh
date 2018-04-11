@@ -35,8 +35,6 @@ echo -e "\tCORRUPT_CORRELATION=$CORRUPT_CORRELATION"
 echo -e "\tDUPLICATE_PERCENT=$DUPLICATE_PERCENT"
 echo -e "\tDUPLICATE_CORRELATION=$DUPLICATE_CORRELATION"
 
-exit;
-
 echo "Resetting iptables"
 ~/csc466/set_iptables.sh
 

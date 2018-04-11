@@ -225,10 +225,13 @@ def run_treatment(config, router, chrome, treatment):
     stdin, stdout, stderr = router.exec_command(command)
     stdin.write(json.dumps(treatment, indent=4, sort_keys=True))
     stdin.flush()
+    stdin.close()
+    stdin.channel.shutdown_write()
     retcode = stdout.channel.recv_exit_status()
     if retcode:
         logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
         sys.exit(1)
+    logger.info('Output was\n%s', stdout.read().decode('utf-8'))
     # ok now that we have setup the router, what about the server?
     # what about the url? we assume a url structure on the other side
     # of object-count--object-size--page.html
