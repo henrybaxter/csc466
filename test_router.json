@@ -1,0 +1,15 @@
+{
+  "delay-time": 100,
+  "delay-jitter": 50,
+  "delay-correlation": 25.0,
+  "delay-distribution": "normal",
+  "loss-p": 0.1,
+  "loss-r": 0.9,
+  "loss-h": 0.0,
+  "loss-k": 1.0,
+  "corrupt-percent": 1.0,
+  "corrupt-correlation": 25.0,
+  "duplicate-percent": 1.0,
+  "duplicate-correlation": 25.0,
+  "rate-limit": 50.0
+}

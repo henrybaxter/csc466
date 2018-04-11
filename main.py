@@ -24,15 +24,10 @@ def parse_args():
     logger.debug('Parsing command line arguments')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='config.toml')
-    parser.add_argument('--rate-limit', type=float)
-    parser.add_argument('--latency', type=int)
-    parser.add_argument('--packet-loss', type=float)
-    parser.add_argument('--object-count', type=int)
-    parser.add_argument('--object-size', type=int)
     parser.add_argument('--timeout', type=int)
     parser.add_argument('--start-chrome', action='store_true')
     parser.add_argument('--single', action='store_true')
-    parser.add_argument('--environment', default=os.environ.get('CSC466ENV', 'local'))
+    parser.add_argument('--environment')
     parser.add_argument('--iterations', type=int)
     args = parser.parse_args()
     try:
@@ -46,73 +41,62 @@ def parse_args():
         sys.exit(1)
     if args.iterations is not None:
         config['iterations'] = args.iterations
-    if args.rate_limit is not None:
-        config['rate-limit'] = args.rate_limit
-        config['rate-limits'] = [args.rate_limit]
-    if args.packet_loss is not None:
-        config['packet-loss'] = args.packet_loss
-        config['packet-losses'] = [args.packet_loss]
-    if args.latency is not None:
-        config['latency'] = args.latency
-        config['latencies'] = [args.latency]
-    if args.object_count is not None:
-        config['object-count'] = args.object_count
-        config['object-counts'] = [args.object_count]
-    if args.object_size is not None:
-        config['object-size'] = args.object_size
-        config['object-sizes'] = [args.object_sizes]
     if args.timeout is not None:
         config['page-load-timeout'] = args.timeout
+    if args.environment is not None:
+        env = args.environment
+    else:
+        env = os.environ.get('CSC466ENV')
+    if not env:
+        logger.error('No --environment or CSC466ENV defined')
+        sys.exit(1)
+    if env not in ['local', 'ec2']:
+        logger.error('Unexpected environment %s', env)
+    config['environment'] = env
     config['single'] = args.single
     config['start-chrome'] = args.start_chrome
-    config['environment'] = args.environment
     logger.debug('Command line arguments parsed')
     return config
 
 
 def generate_treatments(config):
     logger.debug('Generating treatments')
-    dimensions = [
-        ('rate-limit', 'rate-limits'),
-        ('latency', 'latencies'),
-        ('packet-loss', 'packet-losses'),
-        ('object-count', 'object-counts'),
-        ('object-size', 'object-sizes'),
-    ]
+    default = config['treatment'].copy()
+    default.update({
+        'environment': config['environment']
+    })
     treatments = []
     for protocol in ['quic', 'tcp']:
-        default = {
-            'environment': config['environment'],
-            'protocol': protocol,
-            'varying': 'none'
-        }
-        for dim in range(len(dimensions)):
-            name = dimensions[dim][0]
-            default[name] = config[name]
-        treatments.append(default)
-        for vdim in range(len(dimensions)):
-            varying = dimensions[vdim][0]
-            values = config[dimensions[vdim][1]]
-            try:
-                values.remove(config[varying])
-            except ValueError:
-                pass
+        treatment = default.copy()
+        treatment.update({
+            'protocol': protocol
+        })
+        treatments.append(treatment)
+        for name, values in config['variations'].items():
             # for each value in the varying dimension
             for value in values:
-                treatment = {
-                    'environment': config['environment'],
-                    'protocol': protocol,
-                    varying: value,
-                    'varying': varying
-                }
-                # collect all the constants
-                for cdim in range(len(dimensions)):
-                    if cdim == vdim:
-                        continue
-                    constant = dimensions[cdim][0]
-                    treatment[constant] = config[constant]
-                treatments.append(treatment)
+                variation = treatment.copy()
+                variation.update({
+                    name: value
+                })
+                treatments.append(variation)
+        for description in config['dual-variations']:
+            axis1 = description['axis1']
+            axis2 = description['axis2']
+            assert axis1 in default
+            assert axis2 in default
+            for value1, value2 in description['values']:
+                variation = treatment.copy()
+                variation.update({
+                    axis1: value1,
+                    axis2: value2
+                })
+                treatments.append(variation)
     logger.info('Generated %d treatments', len(treatments))
+    treatments = [frozenset(treatment.items()) for treatment in treatments]
+    treatments = set(treatments)
+    logger.info('Settifying reduces to %s treatments', len(treatments))
+    treatments = [dict(treatment) for treatment in treatments]
     return treatments
 
 
@@ -222,9 +206,12 @@ def execute_request(chrome, url):
 
 def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
-    command = 'sudo ./csc466/set_router {rate-limit} {latency} {packet-loss}'.format(**treatment)
+    command = "sudo ./csc466/set_router.sh"
     logger.info('Running on router: %s', command)
+    logger.info('Passing JSON to stdin: %s', json.dumps(treatment, indent=4, sort_keys=True))
     stdin, stdout, stderr = router.exec_command(command)
+    stdin.write(json.dumps(treatment, indent=4, sort_keys=True))
+    stdin.flush()
     retcode = stdout.channel.recv_exit_status()
     if retcode:
         logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
@@ -263,6 +250,8 @@ def main():
     absolute_start = time.time()
     config = parse_args()
     treatments = generate_treatments(config)
+    #pprint.pprint(treatments)
+    sys.exit()
     if config['start-chrome']:
         start_chrome_processes(config)
     chromes = connect_chrome_interfaces(config)
