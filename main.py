@@ -63,7 +63,8 @@ def generate_treatments(config):
     logger.debug('Generating treatments')
     default = config['treatment'].copy()
     default.update({
-        'environment': config['environment']
+        'environment': config['environment'],
+        'varying': 'none'
     })
     treatments = []
     for protocol in ['quic', 'tcp']:
@@ -77,7 +78,8 @@ def generate_treatments(config):
             for value in values:
                 variation = treatment.copy()
                 variation.update({
-                    name: value
+                    name: value,
+                    'varying': name
                 })
                 treatments.append(variation)
         for description in config['dual-variations']:
@@ -89,14 +91,11 @@ def generate_treatments(config):
                 variation = treatment.copy()
                 variation.update({
                     axis1: value1,
-                    axis2: value2
+                    axis2: value2,
+                    'varying': '{}, {}'.format(axis1, axis2)
                 })
                 treatments.append(variation)
     logger.info('Generated %d treatments', len(treatments))
-    treatments = [frozenset(treatment.items()) for treatment in treatments]
-    treatments = set(treatments)
-    logger.info('Settifying reduces to %s treatments', len(treatments))
-    treatments = [dict(treatment) for treatment in treatments]
     return treatments
 
 
@@ -204,6 +203,20 @@ def execute_request(chrome, url):
     return elapsed
 
 
+def save_results(config, treatments):
+    root = os.path.join('data', config['environment'])
+    try:
+        shutil.rmtree(root)
+    except FileNotFoundError:
+        pass
+    os.makedirs(root)
+    path = os.path.join(root, 'results.json')
+    results = config.copy()
+    results['treatments'] = treatments
+    with open(path, 'w') as ofp:
+        json.dump(results, ofp, sort_keys=True, indent=4)
+
+
 def run_treatment(config, router, chrome, treatment):
     logger.info('Running treatment %s', pprint.pformat(treatment))
     command = "sudo ./csc466/set_router.sh"
@@ -232,43 +245,18 @@ def run_treatment(config, router, chrome, treatment):
     return results
 
 
-def save_results(config, treatments):
-    root = os.path.join('data', config['environment'])
-    try:
-        shutil.rmtree(root)
-    except FileNotFoundError:
-        pass
-    os.makedirs(root)
-    path = os.path.join(root, 'results.json')
-    results = config.copy()
-    results['treatments'] = treatments
-    with open(path, 'w') as ofp:
-        json.dump(results, ofp, sort_keys=True, indent=4)
-
-
-def main():
-    absolute_start = time.time()
-    config = parse_args()
-    treatments = generate_treatments(config)
-    #pprint.pprint(treatments)
-    sys.exit()
-    if config['start-chrome']:
-        start_chrome_processes(config)
-    chromes = connect_chrome_interfaces(config)
-    router = ssh_connection('csc466-router')
-    elapsed = time.time() - absolute_start
-    logger.info('Took {:.1f} seconds to prepare for treatments'.format(elapsed))
-    results = run_treatments(config, router, chromes, treatments)
-    save_results(config, results)
-    convert_data()
-
-
 def run_treatments(config, router, chromes, treatments):
     start = time.time()
     results = []
+    cache = {}
     for i, treatment in enumerate(treatments):
         result = treatment.copy()
-        result['page-load-times'] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        key = tuple(sorted((key, value) for key, value in treatment.items() if key != 'varying'))
+        if key not in cache:
+            cache[key] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        else:
+            logger.info('Found treatment in cache!')
+        result['page-load-times'] = cache[key]
         results.append(result)
         if config['single']:
             logger.info('Single shot, exiting early')
@@ -278,6 +266,22 @@ def run_treatments(config, router, chromes, treatments):
         predicted = (len(treatments) / done - 1) * elapsed
         logger.info('Completed {} of {} treatments in {:.1f} seconds, estimate {:.1f} minutes left'.format(done, len(treatments), elapsed, predicted / 60))
     return results
+
+
+def main():
+    absolute_start = time.time()
+    config = parse_args()
+    treatments = generate_treatments(config)
+    # pprint.pprint(treatments)
+    if config['start-chrome']:
+        start_chrome_processes(config)
+    chromes = connect_chrome_interfaces(config)
+    router = ssh_connection('csc466-router')
+    elapsed = time.time() - absolute_start
+    logger.info('Took {:.1f} seconds to prepare for treatments'.format(elapsed))
+    results = run_treatments(config, router, chromes, treatments)
+    save_results(config, results)
+    convert_data()
 
 
 if __name__ == '__main__':
