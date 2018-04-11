@@ -41,23 +41,23 @@ chrome-options = [
 
 [treatment]
 
-	delay-time = 20 # ms
-	delay-jitter = 5 # ms
+	delay-time = 100 # ms
+	delay-jitter = 20 # ms
 	delay-correlation = 25 # %
 	# one of: uniform, normal, pareto, paretonormal
 	delay-distribution = 'normal'
 
 	# Gilbert-Elliot model
-	loss-p = 0.01 # [0,1] probability of transition to 'bad state'
-	loss-r = 0.99 # [0,1] probability of transition to 'good state'
+	loss-p = 0.02 # [0,1] probability of transition to 'bad state'
+	loss-r = 0.98 # [0,1] probability of transition to 'good state'
 	loss-h = 0 # [0,1] 1 - h is loss probability in the good state
 	loss-k = 1.0 # [0,1] 1 - k is loss probability in the bad state
 
 	# introducing bit errors in packets
-	corrupt-percent = 0.0 # %
+	corrupt-percent = 0.1 # %
 	corrupt-correlation = 25 # %
 
-	duplicate-percent = 0.0 # %
+	duplicate-percent = 0.1 # %
 	duplicate-correlation = 25 # %
 
 	# tc qdisc ceil in mbit
@@ -81,4 +81,7 @@ chrome-options = [
 
 	axis1 = 'delay-time'
 	axis2 = 'delay-jitter'
-	values = [[50,10], [100,20], [150,30]]
+	values = [
+		[50,10], [50,40], [50,70], [50,100], [50,130],
+		[100,10], [100,40], [100,70], [100,100], [100,130],
+	]

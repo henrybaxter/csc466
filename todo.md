@@ -25,6 +25,6 @@
 - DONE ~cleanup log~
 - DONE ~add time prediction~
 - DONE ~sql(lite) db of results~
-- add side traffic treatment dimension
+- DONE ~add side traffic treatment dimension (as different environment)~
 - DONE ~jitter treatment dimension~
-- add permanent log file at DEBUG level
+- DONE ~add permanent log file at DEBUG level~
