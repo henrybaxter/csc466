@@ -1,25 +1,5 @@
 host = "https://csc466-router.baxtergroup.io"
 
-# tc qdisc ceil in mbit
-rate-limit = 50.0
-rate-limits = []
-
-# tc qdisc latency in ms
-latency = 0
-latencies = []
-
-# tc qdisc netem loss in %
-packet-loss = 0.0
-packet-losses = []
-
-# images on page
-object-count = 5
-object-counts = []
-
-# size of images on page
-object-size = 10
-object-sizes = []
-
 # time to wait for a single page request
 # (may incorporate multiple subrequests for dependent objects)
 page-load-timeout = 60
@@ -59,4 +39,42 @@ chrome-options = [
 	"--enable-net-benchmarking"
 ]
 
+[treatment]
 
+	delay-time = 20 # ms
+	delay-jitter = 5 # ms
+	delay-correlation = 25 # %
+	# one of: uniform, normal, pareto, paretonormal
+	delay-distribution = 'normal'
+
+	# Gilbert-Elliot model
+	loss-p = 0.01 # [0,1] probability of transition to 'bad state'
+	loss-r = 0.99 # [0,1] probability of transition to 'good state'
+	loss-h = 0 # [0,1] 1 - h is loss probability in the good state
+	loss-k = 1.0 # [0,1] 1 - k is loss probability in the bad state
+
+	# introducing bit errors in packets
+	corrupt-percent = 0.0 # %
+	corrupt-correlation = 25 # %
+
+	duplicate-percent = 0.0 # %
+	duplicate-correlation = 25 # %
+
+	# tc qdisc ceil in mbit
+	rate-limit = 50.0
+
+	# images on page
+	object-count = 5
+
+	# size of images on page
+	object-size = 10
+
+[variations]
+
+	object-count = [5, 10]
+
+[[dual-variations]]
+
+	axis1 = 'delay-time'
+	axis2 = 'delay-jitter'
+	values = [[50,10], [100,20]]

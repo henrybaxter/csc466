@@ -7,6 +7,8 @@ import numpy as np
 
 def convert_data():
     for environment in os.listdir('data'):
+        if environment == '.DS_Store':
+            continue
         print('Converting', environment)
         root = os.path.join('data', environment)
         in_path = os.path.join(root, 'results.json')
@@ -18,8 +20,14 @@ def convert_data():
             os.remove(sqlite_path)
         except FileNotFoundError:
             pass
-        fieldnames = ['environment', 'protocol', 'varying', 'object-count', 'object-size',
-                      'rate-limit', 'packet-loss', 'latency', 'page-load-time']
+        fieldnames = ['environment', 'protocol', 'varying',
+                      'object-count', 'object-size',
+                      'rate-limit',
+                      'delay-time', 'delay-jitter', 'delay-correlation', 'delay-distribution',
+                      'loss-p', 'loss-r', 'loss-h', 'loss-k',
+                      'corrupt-percent', 'corrupt-correlation',
+                      'duplicate-percent', 'duplicate-correlation',
+                      'page-load-time']
 
         with open(csv_path, 'w') as ofp:
             writer = csv.DictWriter(ofp, fieldnames=fieldnames)
@@ -45,6 +53,7 @@ def convert_data():
                 rows.append(row)
             writer.writerows(rows)
 
+        '''
         conn = sqlite3.connect(sqlite_path)
         c = conn.cursor()
         c.execute("""
@@ -61,6 +70,7 @@ def convert_data():
                      t['object-count'], t['object-size'], page_load_time)
                 )
         conn.commit()
+        '''
 
 
 if __name__ == '__main__':

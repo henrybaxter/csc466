@@ -232,9 +232,6 @@ def run_treatment(config, router, chrome, treatment):
         logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
         sys.exit(1)
     logger.info('Output was\n%s', stdout.read().decode('utf-8'))
-    # ok now that we have setup the router, what about the server?
-    # what about the url? we assume a url structure on the other side
-    # of object-count--object-size--page.html
     url = urljoin(
         config['host'],
         'page-{object-count}-{object-size}k.html'.format(**treatment)
