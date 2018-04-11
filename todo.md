@@ -17,8 +17,8 @@
     + DONE ~plots use subfolders, also included in title~
 - make at least three standard charts
     + DONE ~TCP vs QUIC on each treatment~
-    + TCP vs QUIC along each dimension (twinned bar charts)
-    + Heatmap over 2 dimensions? not sure yet
+    + DONE ~TCP vs QUIC along each dimension (twinned bar charts)~
+    + Heatmap over 2 dimensions
 
 ## Nice
 
@@ -26,4 +26,5 @@
 - DONE ~add time prediction~
 - DONE ~sql(lite) db of results~
 - add side traffic treatment dimension
-- add jitter treatment dimension
+- DONE ~jitter treatment dimension~
+- add permanent log file at DEBUG level
