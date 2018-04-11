@@ -56,9 +56,9 @@ QUIC is a new transport protocol, first implemented by Google in 2013. Far from 
 
 QUIC is designed to optimize HTTPS traffic. It is functionally equivalent to TCP+TLS+HTTP/2\footnote{For the purpose of this report, \emph{TCP} will refer to \emph{TCP+TLS+HTTP/2}}, but is built on top of UDP. QUIC exists entirely within the userspace, which allows rapid evolution of the protocol. QUIC has several features that allow it to perform better than TCP, including:
 \begin{itemize}
-	\item Reduced latency for connection establishment
-	\item Stream multiplexing without head-of-line blocking
-	\item Improved congestion control and loss recovery
+	\item \textbf{Reduced latency for connection establishment}
+	\item \textbf{Stream multiplexing without head-of-line blocking}
+	\item \textbf{Improved congestion control and loss recovery}
 \end{itemize}
 
 \textbf{Reduced Connection Latency:} QUIC combines both the transport and cryptographic handshake to reduce connection latency. For new connections, QUIC requires only 1-RTT to establish a connection\footnote{When there is no version negotiation}. This is one and two RTTs faster than TCP+TLS1.3 and TCP+TLS1.2, respectively\cite{7867726}. When a connection has been previously established, QUIC requires 0-RTT to re-establish the connection, by caching cryptographic values of the server on the client side.
@@ -85,12 +85,11 @@ QUIC is designed to optimize HTTPS traffic. It is functionally equivalent to TCP
 \label{background:related}
 As stated above, Kakhki et al. provides a starting point for our analysis. To the best of our knowledge, it is the most comprehensive comparison of QUIC and TCP to date. Further papers that provide analysis of QUIC performance include:
 
-% Ask Henry for .bib file with these citations...or find them
 \begin{itemize}
-	\item How Quick is QUIC?
-	\item HTTP over UDP: An Experimental Investigation of QUIC
-	\item Does QUIC make the web faster?
-	\item Evaluation of QUIC in Web Page Performance
+	\item How Quick is QUIC?\cite{Megysei:2016:HQQ}
+	\item HTTP over UDP: An Experimental Investigation of QUIC\cite{Carlucci:2015:HOU}
+	\item Does QUIC make the web faster?\cite{Biswal:2016:DQM}
+	\item Evaluation of QUIC in Web Page Performance\cite{Das:2014:EQW}
 \end{itemize}
 
 \section{Motivation}
@@ -126,7 +125,11 @@ Henry:	&	Liam:	\\ \hline
 \textbullet Wrote the project proposal	&	\textbullet Set up website	\\
 \textbullet Website Updates				&	\textbullet Website Updates	\\
 \textbullet	Set up of QUIC, TCP Servers	&	\textbullet	Image creation for testing	\\
-\textbullet	Writing of Python code for testing	&	\textbullet	Writing of Python code for page generation	\\
+\textbullet	Writing of Python code for programmatic testing	&	\textbullet	Writing of Python code for page generation \\
+\textbullet Running of tests			&	\textbullet Poster creation, outline \\
+\textbullet Poster content 				&	\textbullet Poster content \\
+\textbullet Overall data collection		&	\textbullet	Report outline \\
+\textbullet	Report content 				&	\textbullet Report content \\
 \end{tabularx}
 
 \bibliography{bibliography}{}
