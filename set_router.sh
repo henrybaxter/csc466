@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 # NOTE
 # class 5 is the 'treated' traffic
@@ -7,6 +7,7 @@
 
 JSON=`cat`
 
+RATE_LIMIT=$(echo "$JSON" | jq -r '.["rate-limit"]')
 DELAY_TIME=$(echo "$JSON" | jq -r '.["delay-time"]')
 DELAY_JITTER=$(echo $JSON | jq -r '.["delay-jitter"]')
 DELAY_CORRELATION=$(echo $JSON | jq -r '.["delay-correlation"]')
@@ -22,6 +23,7 @@ DUPLICATE_CORRELATION=$(echo $JSON | jq -r '.["duplicate-correlation"]')
 
 
 echo "Using:"
+echo -e "\tRATE_LIMIT=$RATE_LIMIT"
 echo -e "\tDELAY_TIME=$DELAY_TIME"
 echo -e "\tDELAY_JITTER=$DELAY_JITTER"
 echo -e "\tDELAY_CORRELATION=$DELAY_CORRELATION"
