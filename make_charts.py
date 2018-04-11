@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import pprint
+import sys
 
 import matplotlib.pylab as plt
 
@@ -42,7 +43,6 @@ def plot_each_tcp_vs_quic(treatments, out_dir):
                 plt.close()
 
 
-
 def to_panda_dataframe(results):
     keys = list(results['treatments'][0].keys())
     keys.remove('page-load-times')
@@ -60,20 +60,34 @@ def to_panda_dataframe(results):
 
 def bar_plots(df, environment, out_dir):
     # choose something 'varying', so regroup by 'varying', pairs...
-    dimensions = [
-        ('latency', 'Latency (ms)'),
-        ('rate-limit', 'Rate Limit (mbit)'),
-        ('packet-loss', 'Packet Loss (%)'),
-        ('object-size', 'Object Size (kb)'),
-        ('object-count', 'Object Count')
-    ]
-    for varying, label in dimensions:
+    labels = {
+        'delay-time': 'Delay Time (ms)',
+        'delay-jitter': 'Delay Jitter (ms)',
+        'delay-correlation': 'Delay Correlation (%)',
+        'delay-distribution': 'Delay Distribution',
+        'loss-p': 'Probability of Bad State',
+        'loss-r': 'Probability of Recovered State',
+        'loss-h': 'Inverse Loss Probability in Recovered State',
+        'loss-k': 'Inverse Loss Probability in Bad State',
+        'corrupt-percent': 'Corrupt Packets (%)',
+        'corrupt-correlation': 'Corruption Correlation (%)',
+        'duplicate-percent': 'Duplicate Packets (%)',
+        'duplicate-correlation': 'Duplication Correlation (%)',
+        'rate-limit': 'Rate Limit (mbit)',
+        'object-count': 'Object Count',
+        'object-size': 'Object Size (kb)'
+
+    }
+    df.varying.unique()
+    for dimension in df.varying.unique():
+        if ',' in dimension or dimension == 'none':
+            continue
         plt.figure()
-        plt.title('QUIC vs TCP: Varying {} ({})'.format(label, environment))
-        sns.barplot(x=varying, y='page-load-time', hue='protocol', data=df[(df.varying == varying) | (df.varying == 'none')])
-        plt.xlabel(label)
+        plt.title('QUIC vs TCP: Varying {} ({})'.format(labels[dimension], environment))
+        sns.barplot(x=dimension, y='page-load-time', hue='protocol', data=df[df.varying == dimension])
+        plt.xlabel(labels[dimension])
         plt.ylabel('Page Load Time (ms)')
-        slug = '{}'.format(varying)
+        slug = '{}'.format(dimension)
         plt.savefig(os.path.join(out_dir, slug + '.eps'))
         plt.savefig(os.path.join(out_dir, slug + '.png'))
         plt.close()
@@ -93,7 +107,7 @@ def main():
             pass
         os.makedirs(out_dir)
         df = to_panda_dataframe(results)
-        plot_each_tcp_vs_quic(results['treatments'], out_dir)
+        # plot_each_tcp_vs_quic(results['treatments'], out_dir)
         bar_plots(df, environment, out_dir)
 
 
