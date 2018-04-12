@@ -3,6 +3,7 @@ tcp-root/
 plots/
 !poster/plots
 __pycache__
+cache/
 .DS_Store
 poster/build/
 *.log
