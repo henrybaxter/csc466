@@ -95,8 +95,8 @@ def make_site(host, protocol, counts, sizes):
 
 def main():
     config = get_config()
-    counts = set(config['object-counts']) | set([config['object-count']])
-    sizes = set(config['object-sizes']) | set([config['object-size']])
+    counts = set(config['variations']['object-count']) | set([config['treatment']['object-count']])
+    sizes = set(config['variations']['object-size']) | set([config['treatment']['object-size']])
     for protocol in ['tcp', 'quic']:
         make_site(config['host'], protocol, counts, sizes)
 
