@@ -10,6 +10,7 @@
 \usepackage{multicol}
 \usepackage{epstopdf}
 \usepackage{enumitem} % Reduce enumerate spacing
+\usepackage{hyperref} % \href{}
 
 \doublespacing
 \begin{document}
@@ -41,7 +42,7 @@ Our results show that QUIC outperforms TCP for nearly all variables tested from 
 Our results suggest that QUIC is best for a consumer in most situations.
 % More conclusions....
 
-In section \ref{background}, we give a brief overview of the QUIC protocol, and the features that allow for improved performance over TCP. We also present related work on the analysis of QUIC. In \ref{methods}, our testbed and methodology are described in detail. In \ref{data}, the aggregation of our data is presented, and is discussed in \ref{results}. The conclusions of our findings are presented in \ref{conclusions}.
+In Section \ref{background}, we give a brief overview of the QUIC protocol, and the features that allow for improved performance over TCP. We also present related work on the analysis of QUIC. In Section \ref{methods}, our testbed and methodology are described in detail. In Section \ref{data_results}, the aggregation of our data is presented, and is discussed in detail. The conclusions of our findings are presented in Section \ref{conclusions}.
 
 \section{Background}
 \label{background}
@@ -110,9 +111,9 @@ Evaluation was performed in three different network environments, as shown in fi
 
 The server and remote desktops run on Amazon EC2 T2.Large (Kernel 4.4.0-1054-aws, Ubuntu 16.04, 8 GB memory, Intel Xeon 3.0GHz\footnote{The T2 EC2 instance uses `burstable' CPU, so clock speed is \emph{up to} 3.0 GHz}).The router runs on Amazon EC2 T2.micro (Kernel 4.4.0-1054-aws, Ubuntu 16.04, 1 GB memory, Intel Xeon 3.3 GHz\footnote{Again, \emph{up to} 3.3 GHz}). The EC2 router and server are located on ec2-east1. One EC2 desktop is on ec2-east1 (as in fig. \ref{fig:network} (b)), and another on ec2-west1 (as in fig. \ref{fig:network} (c)).
 
-The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel 2.4 GHz).
+The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel Xeon 3.5 GHz).
 
-All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 2.4, and over QUIC via the QUIC standalone server, as provided with the Chromium source code.
+All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 1.10.3 with OpenSSL 1.0.2g and TLS SNI, and over QUIC via the QUIC standalone server, as provided with the Chromium source code at commit 902d73ba5f92c7f10ea8c07e5839a7143b28d107.
 
 \subsection{Testing Workflow}
 Since a major objective of this work was the reproducibility and extensibility of the testing protocol, we go into it in some detail here.
@@ -295,7 +296,7 @@ The packet corruption charts in Figure \ref{figs:packet_corruption} have differe
 \label{figs:packet_timing}
 \end{figure}
 
-Adjusting delay time effectively doubles RTT since delays have an impact at both ingress and egress of the router. The jitter values have an impact beyond the typical jitter one might experience in a VOIP conversation, and in fact were not chosen for their primary effect. By incraseing jitter beyond the delay time, packet reordering is introduced. Figure \ref{figs:packet_timing} shows the standard result that for lossless situations the desktop on the same VLAN has higher TCP/IP performance, while QUIC outperforms in the Internet setting. With increasing RTT, jitter, and its secondary effect packet reordering, there is a linear impact on both QUIC and TCP/IP with remarkably similar slopes.
+Adjusting delay time effectively doubles RTT since delays have an impact at both ingress and egress of the router. The jitter values have an impact beyond the typical jitter one might experience in a VOIP conversation, and in fact were not chosen for their primary effect. By increasing jitter beyond the delay time, packet reordering is introduced. Figure \ref{figs:packet_timing} shows the standard result that for lossless situations the desktop on the same VLAN has higher TCP/IP performance, while QUIC outperforms in the Internet setting. With increasing RTT, jitter, and its secondary effect packet reordering, there is a linear impact on both QUIC and TCP/IP with remarkably similar slopes.
 
 \begin{figure}[h]
 \centering
@@ -340,8 +341,13 @@ tc qdisc add dev ifb0 parent 1:5 handle 10: netem  \
 
 Figure \ref{figs:netem} shows that netem is given arguments for delay, loss, corruption, and duplication regardless of what these arguments are. In particular, it is not clear from the netem model if, for example, setting corruption and corruption correlation to zero is identical to not setting it at all. This would be an excellent place to look for the discrepancy, and could be determined shortly either empirically or by inspection of the netem source code.
 
+Another possible explanation is that the QUIC server, as described in the Chromium source code, is not at all meant to be production quality or performant. Unfortunately there are no production QUIC servers written by Google that are open source, however there are third party projects such as Caddy, which uses a library written in Golang for QUIC. This is also unlikely to be as performant as NGINX. In particular, it is not clear without further inspection of the QUIC experimental server source code how multiple QUIC streams are threaded, particularly if they are requesting disparate files on the hard drive. This is another avenue for investigation.
+
 \section{Conclusions}
 \label{conclusions}
+By building a framework and testing harness that is highly modular and configurable that generates actionable and visual results on the fly, we have met the goal of building a replicable and extensible comparison of QUIC. In the process of running tests we have found a number of intriguing results that demand further experimentation and analysis. In particular, the QUIC protocol suffers during intradatacenter communication on AWS, and when handling very large or very high numbers of objects.
+
+However, it is clear at this point that QUIC is more suitable for fast initial user response times in the majority of web use cases. Further exploration and elucidation of these results will require minimal setup and zero programming effort by a third party, as full source code and documentation is available online on GitHub at \url{https://github.com/henrybaxter/csc466}.
 
 \appendix
 
