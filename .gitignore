@@ -1,6 +1,6 @@
 quic-root/
 tcp-root/
-plots/
+!report/plots/
 !poster/plots
 __pycache__
 cache/
