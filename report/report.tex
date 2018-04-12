@@ -109,9 +109,7 @@ The server and remote desktops run on Amazon EC2 T2.Large (Kernel 4.4.0-1054-aws
 
 The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel Xeon 3.5 GHz).
 
-All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 1.10.3 with OpenSSL 1.0.2g and TLS SNI, and over QUIC via the QUIC standalone server, as provided with the Chromium source code at commit\\
-902d73ba5f92c7f10ea8c07e5839a7143b28d107.
-% Forced newline here because commit number was running off page
+All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 1.10.3 with OpenSSL 1.0.2g and TLS SNI, and over QUIC via the QUIC standalone server, as provided with the Chromium source code at commit 902d73b.
 
 \begin{figure}
 \begin{tabular}{c c}
@@ -128,9 +126,9 @@ All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). Th
 \end{figure}
 
 \subsection{Testing Workflow}
-Since a major objective of this work was the reproducibility and extensibility of the testing protocol, we go into it in some detail here.
+Since a major objective of this work was the reproducibility and extensibility of the testing protocol, we go into it in some detail here. Despite significant capabilities, it was achieved in 500 lines of idiomatic Python and 100 lines of BASH shell code. The majority of the work can be seen on GitHub at \url{https://github.com/henrybaxter/csc466/blob/master/main.py} and the router traffic shaping tool here \url{https://github.com/henrybaxter/csc466/blob/master/set_router.sh}.
 
-A configuration file written in TOML format, a subsection of which is shown in \ref{fig:config} to demonstrate the ease of adding or removing test cases. Under the treatment heading are treatment defaults, under the variations heading are a list of values to vary for whichever dimension is desired, and under dual-variations one can have an unlimited number of two dimensional treatments for the production of heatmaps or other insightful data analysis.
+Configuration files are written in TOML format, a subsection of which is shown in \ref{fig:config} to demonstrate the ease of adding or removing test cases. Under the \textit{treatment} heading are treatment defaults, and under the \textit{variations} heading are a list of values to vary for whichever dimension is desired, and under dual-variations one can have an unlimited number of two dimensional treatments for the production of heatmaps or other insightful data analysis.
 
 \begin{figure}
 \begin{lstlisting}
@@ -234,7 +232,7 @@ We present a selection of charts, comparing the three environments horizontally 
 
 In Figure \ref{figs:rate_limit} we see that for a local desktop consumer on a typical Internet connection, we can expect QUIC to outperform TCP/IP in every case, but maximally in the 5-25 megabit range. QUIC does not outperform TCP/IP when the desktop is on the same VLAN and in the same physical location in the AWS cloud.
 
-By showing that an EC2 instance in a different physical location and on a different VLAN has performance similar to a consume desktop, we see that there is some network condition or optimization in play that is not peculiar to EC2, Linux, the Chrome Linux build, or the AWS cloud in general. Extensive investigation with iperf and varying network parameters as in the following data have not yielded an explanation for this discrepancy.
+By showing that an EC2 instance in a different physical location and on a different VLAN has performance similar to a consumer desktop, we see that there is some network condition or optimization in play that is not peculiar to EC2, Linux, the Chrome Linux build, or the AWS cloud in general. Extensive investigation with iperf and varying network parameters as in the following data have not yielded an explanation for this discrepancy.
 
 
 \begin{figure}[h]
