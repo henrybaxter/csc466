@@ -22,9 +22,8 @@
 
 \maketitle
 
-	%Just wrote this abstract without any real references. Will proof/ rewrite after other sections are written.
 \begin{abstract}
-	Quick UDP Internet Connections (QUIC) is a transport protocol, first implemented by Google in 2013. Since then, it has seen rapid development over many version numbers. By design, QUIC is opaque to outside analysis. QUIC is encrypted, and exists in application space, to prevent ossification of the protocol, unlike TCP. Therefore, black-box analysis is required to study the performance of QUIC. We set out to compare the performance of QUIC and TCP. Further, we evaluate the protocols in a replicable and extensible way, to allow ease of future comparisons of the protocols. 
+	Quick UDP Internet Connections (QUIC) is a transport protocol, first implemented by Google in 2013. Since then, it has seen rapid development over many version numbers. Analysis of QUIC is relatively limited, as compared to TCP, the protocol it is largely meant to replace. We set out to create a replicable and extensible method of comparison of the QUIC and TCP protocols. Running evaluation with 540 distinct combinations of testing parameters, over three distinct network environments, we found that QUIC outperforms TCP in nearly every situation when the Internet is included. On a single VLAN, TCP edges out QUIC. Overall, QUIC is more suitable for fast initial user response times, which reflects typical web use.
 \end{abstract}
 
 \section{Introduction}
@@ -37,10 +36,7 @@ While these features allow QUIC to see swift development, they in turn make anal
 
 Comparison of QUIC and TCP is done in three testing environments. One, a local client makes requests to an EC2 instance that acts as the QUIC and TCP server, with an additional EC2 instance used to shape network traffic. The second testing environment exists entirely on an Amazon VLAN; one EC2 instance acts as a desktop computer, with two other EC2 instances acting as a router and server, as above. The third testing environment is similar to the second, with the exception that the EC2 Desktop is at a different physical location than the router and server. Parallel requests are made to the QUIC and TCP server, with variations in pages requested, as well as varying network conditions.
 
-Our results show that QUIC outperforms TCP for nearly all variables tested from the local client. The one case where TCP outperforms QUIC from the local client is for very large numbers of objects. This finding is consistent with Kakhi, et al. For testing done within the Amazon VLAN, TCP slightly outperforms QUIC. This may suggest optimizations for TCP within AWS.
-
-Our results suggest that QUIC is best for a consumer in most situations.
-% More conclusions....
+Our results show that QUIC outperforms TCP for nearly all variables tested from the local client. The one case where TCP outperforms QUIC from the local client is for very large numbers of objects. This finding is consistent with Kakhi, et al. For testing done within the Amazon VLAN, TCP slightly outperforms QUIC. This may suggest optimizations for TCP within AWS. Testing in the third scenario was done as an attempt to explain lack of QUIC performance in the same VLAN. Results in this scenario are similar to those with a local client.
 
 In Section \ref{background}, we give a brief overview of the QUIC protocol, and the features that allow for improved performance over TCP. We also present related work on the analysis of QUIC. In Section \ref{methods}, our testbed and methodology are described in detail. In Section \ref{data_results}, the aggregation of our data is presented, and is discussed in detail. The conclusions of our findings are presented in Section \ref{conclusions}.
 
@@ -113,7 +109,23 @@ The server and remote desktops run on Amazon EC2 T2.Large (Kernel 4.4.0-1054-aws
 
 The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel Xeon 3.5 GHz).
 
-All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 1.10.3 with OpenSSL 1.0.2g and TLS SNI, and over QUIC via the QUIC standalone server, as provided with the Chromium source code at commit 902d73ba5f92c7f10ea8c07e5839a7143b28d107.
+All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 1.10.3 with OpenSSL 1.0.2g and TLS SNI, and over QUIC via the QUIC standalone server, as provided with the Chromium source code at commit\\
+902d73ba5f92c7f10ea8c07e5839a7143b28d107.
+% Forced newline here because commit number was running off page
+
+\begin{figure}
+\begin{tabular}{c c}
+\includegraphics[scale=.25]{images/local.png} & \includegraphics[scale=.25]{images/aws.png}\\
+~ & ~ \\
+(a) & (b) \\
+~ & ~ \\
+\multicolumn{2}{c}{\includegraphics[scale=.25]{images/aws_inet.png}} \\
+~ & ~ \\
+\multicolumn{2}{c}{(c)} \\
+\end{tabular}
+\caption{Testbed setup for local (a), EC2 on same VLAN (b) and EC2 on separate VLAN (c)}
+\label{fig:network}
+\end{figure}
 
 \subsection{Testing Workflow}
 Since a major objective of this work was the reproducibility and extensibility of the testing protocol, we go into it in some detail here.
@@ -179,22 +191,8 @@ During the course of testing a variety of information is provided on screen and 
 
 Once testing is complete, charts are automatically generated using standard Python scientific computing tools Panda and Seaborn (based on Matplotlib). Adding new chart types is a matter of writing a few line function as a form of plugin.
 
-\begin{figure}
-\begin{tabular}{c c}
-\includegraphics[scale=.25]{images/local.png} & \includegraphics[scale=.25]{images/aws.png}\\
-~ & ~ \\
-(a) & (b) \\
-~ & ~ \\
-\multicolumn{2}{c}{\includegraphics[scale=.25]{images/aws_inet.png}} \\
-~ & ~ \\
-\multicolumn{2}{c}{(c)} \\
-\end{tabular}
-\caption{Testbed setup for local (a), EC2 on same VLAN (b) and EC2 on separate VLAN (c)}
-\label{fig:network}
-\end{figure}
-
 \subsection{Testing Variables}
-Various treatments of network conditions were evaluated for each of the protocols. Parallel instances of Chrome were launched on either a local machine, or an EC2 instance. Treatments were generated from a configuration file, the variations are shown in table \ref{test_variables}. When a treatment is run, the test environment is automatically configured. Requests are initiated programmatically and page load time is captured for multiple runs. For each treatment, 100 iterations are performed of each protocol.
+Various treatments of network conditions were evaluated for each of the protocols. Parallel instances of Chrome were launched on either a local machine, or an EC2 instance. Treatments were generated from a configuration file, the variations are shown in figurte \ref{test_variables}. When a treatment is run, the test environment is automatically configured. Requests are initiated programmatically and page load time is captured for multiple runs. For each treatment, 100 iterations are performed of each protocol.
 
 Network shaping was performed at the EC2 router using tc htb and qdisc.
 % Going off of config file as of 04/11/18:46...update if there are others missing
