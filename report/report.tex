@@ -214,8 +214,8 @@ Network shaping was performed at the EC2 router using tc htb and qdisc.
 \label{test_variables}
 \end{figure}
 
-\section{Data}
-\label{data}
+\section{Data and Results}
+\label{data_results}
 
 Ninety treatments as detailed in Figure \ref{test_variables} were run for TCP/HTTP2 and QUIC, from three locations, with 100 iterations each, giving a total of 54,000 requests. These results were aggregated down to the 540 distinct situations with their mean and standard deviation recorded. The raw results and these aggregations are available on request.
 
@@ -233,7 +233,7 @@ We present a selection of charts, comparing the three environments horizontally 
 \label{figs:rate_limit}
 \end{figure}
 
-In Figure \ref{figs:rate_limit} we see that for a local desktop consumer on a typical Internet connection, we can expect QUIC to outperform TCP/IP in every case, but maximally in the 5-25 megabit range. As discussed later, QUIC does not outperform TCP/IP when the desktop is on the same VLAN and in the same physical location in the AWS cloud.
+In Figure \ref{figs:rate_limit} we see that for a local desktop consumer on a typical Internet connection, we can expect QUIC to outperform TCP/IP in every case, but maximally in the 5-25 megabit range. QUIC does not outperform TCP/IP when the desktop is on the same VLAN and in the same physical location in the AWS cloud.
 
 By showing that an EC2 instance in a different physical location and on a different VLAN has performance similar to a consume desktop, we see that there is some network condition or optimization in play that is not peculiar to EC2, Linux, the Chrome Linux build, or the AWS cloud in general. Extensive investigation with iperf and varying network parameters as in the following data have not yielded an explanation for this discrepancy.
 
@@ -245,19 +245,39 @@ By showing that an EC2 instance in a different physical location and on a differ
 	\includegraphics[width=.33\textwidth]{{plots/local/loss-p}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/loss-p}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/loss-p}.eps} \\
+\end{tabular}
+\caption{Comparing effect of packet loss}
+\label{figs:packet_loss}
+\end{figure}
 
+In Figure \ref{figs:packet_loss} using the Gilbert-Ellison model of packet loss in the netem model, we see that QUIC has a more robust response to bad state transitions of up to 5\%. This is inconsistent with the findings of Kakhi, et al. The model of packet loss used by Kakhi was a simple uniform drop, which could account for the difference.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
+	Local Desktop & Same VLAN & Cross-Continent EC2 Instance \\
 	\includegraphics[width=.33\textwidth]{{plots/local/duplicate-percent}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/duplicate-percent}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/duplicate-percent}.eps} \\
+\end{tabular}
+\caption{Comparing effect of packet duplication}
+\label{figs:packet_duplication}
+\end{figure}
 
+Packet duplication has a negligible impact on either protocol as show in Figure \ref{figs:packet_duplication}. This makes sense, since duplicate packets are easily disgarded by either protocol, and can in fact decrease the overall response time if there is some packet jitter and unused bandwidth, since packets are effectively racing to be first. This may explain the slight drop in page load time as duplication occurs.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
 	\includegraphics[width=.33\textwidth]{{plots/local/corrupt-percent}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/corrupt-percent}.eps} &
 	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/corrupt-percent}.eps} \\
 \end{tabular}
-\caption{Comparing effect of packet loss, duplication, and corruption}
-\label{figs:packet_disruption}
+\caption{Comparing effect of packet corruption}
+\label{figs:packet_corruption}
 \end{figure}
 
+The packet corruption charts in Figure \ref{figs:packet_corruption} have different domains. The tests run on the same VLAN were able to complete with very high corruption rates of 10\% and 15\%, whereas those run across the Internet simply failed. However despite this visual inconsistency, the impact of random errors in packets is strongest on TCP/IP. The intuitive explanation for this is the greater reliance TCP/IP has on individual packets, as seen in the packet loss charts of Figure \ref{figs:packet_loss}. Further, it is important to recognize that despite QUIC being built on top of UDP which has no error detection, QUIC itself is capable of handling very high error rates.
 
 \begin{figure}[h]
 \centering
@@ -275,6 +295,8 @@ By showing that an EC2 instance in a different physical location and on a differ
 \label{figs:packet_timing}
 \end{figure}
 
+Adjusting delay time effectively doubles RTT since delays have an impact at both ingress and egress of the router. The jitter values have an impact beyond the typical jitter one might experience in a VOIP conversation, and in fact were not chosen for their primary effect. By incraseing jitter beyond the delay time, packet reordering is introduced. Figure \ref{figs:packet_timing} shows the standard result that for lossless situations the desktop on the same VLAN has higher TCP/IP performance, while QUIC outperforms in the Internet setting. With increasing RTT, jitter, and its secondary effect packet reordering, there is a linear impact on both QUIC and TCP/IP with remarkably similar slopes.
+
 \begin{figure}[h]
 \centering
 \begin{tabular}{c c c}
@@ -288,12 +310,35 @@ By showing that an EC2 instance in a different physical location and on a differ
 	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/object-size}.eps} \\
 \end{tabular}
 \caption{Comparing effect of object size and count}
-\label{figs:nonobvious}
+\label{figs:objects}
 \end{figure}
 
+Figure \ref{figs:objects} shows results that are inconsistent with Kakhi, and also with results that were gathered initially with this work. In particular, QUIC has significantly higher page load times for object counts between 10 and 50 even in the non-VLAN case, and in all environments for object sizes larger than approximately 50kb.
 
-\section{Results}
-\label{results}
+A significant change in methodology near the end of this work led to interacting with the linux tc-netem module in a different way.
+
+\begin{figure}
+\begin{lstlisting}[basicstyle=\tiny]
+tc qdisc add dev ifb0 root handle 1: htb default 10
+tc class add dev ifb0 parent 1: classid 1:1 htb rate 1000mbit
+tc class add dev ifb0 parent 1:1 classid 1:10 htb rate 1000mbit
+tc class add dev ifb0 parent 1:1 classid 1:5 htb rate ${RATE_LIMIT}mbit ceil ${RATE_LIMIT}mbit
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 23 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 80 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 443 0xfff flowid 1:5
+tc filter add dev ifb0 protocol ip parent 1: prio 1 u32 match ip sport 5001 0xfff flowid 1:5
+tc qdisc add dev ifb0 parent 1:5 handle 10: netem  \
+	limit 100000 \
+	delay ${DELAY_TIME}ms ${DELAY_JITTER}ms ${DELAY_CORRELATION}% distribution ${DELAY_DISTRIBUTION} \
+	loss gemodel ${LOSS_P} ${LOSS_R} ${LOSS_1H} ${LOSS_1K} \
+	corrupt ${CORRUPT_PERCENT}% ${CORRUPT_CORRELATION}% \
+	duplicate ${DUPLICATE_PERCENT}% ${DUPLICATE_CORRELATION}%
+\end{lstlisting}
+\caption{Excerpt of router configuration showing netem interaction}
+\label{figs:netem}
+\end{figure}
+
+Figure \ref{figs:netem} shows that netem is given arguments for delay, loss, corruption, and duplication regardless of what these arguments are. In particular, it is not clear from the netem model if, for example, setting corruption and corruption correlation to zero is identical to not setting it at all. This would be an excellent place to look for the discrepancy, and could be determined shortly either empirically or by inspection of the netem source code.
 
 \section{Conclusions}
 \label{conclusions}
