@@ -1,5 +1,6 @@
 \documentclass[12pt]{article}
 
+\usepackage{listings} % Code listings
 \usepackage{verbatim} % For comments
 \usepackage{setspace} % For double spacing
 \usepackage{cite}  % For citations
@@ -8,6 +9,7 @@
 \usepackage{graphicx} % For graphics
 \usepackage{multicol}
 \usepackage{epstopdf}
+\usepackage{enumitem} % Reduce enumerate spacing
 
 \doublespacing
 \begin{document}
@@ -112,6 +114,70 @@ The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel 2.
 
 All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 2.4, and over QUIC via the QUIC standalone server, as provided with the Chromium source code.
 
+\subsection{Testing Workflow}
+Since a major objective of this work was the reproducibility and extensibility of the testing protocol, we go into it in some detail here.
+
+A configuration file written in TOML format, a subsection of which is shown in \ref{fig:config} to demonstrate the ease of adding or removing test cases. Under the treatment heading are treatment defaults, under the variations heading are a list of values to vary for whichever dimension is desired, and under dual-variations one can have an unlimited number of two dimensional treatments for the production of heatmaps or other insightful data analysis.
+
+\begin{figure}
+\begin{lstlisting}
+[treatment]
+	delay-time = 20
+	delay-jitter = 5
+	delay-correlation = 25
+	delay-distribution = 'normal'
+	# Gilbert-Elliot packet loss model
+	loss-p = 0.0
+	loss-r = 100.0
+	loss-h = 100.0
+	loss-k = 0.0
+	corrupt-percent = 0.0
+	corrupt-correlation = 25
+	duplicate-percent = 0.0
+	duplicate-correlation = 25
+	rate-limit = 50.0
+	object-count = 5
+	object-size = 10
+
+[variations]
+	rate-limit = [1.0, 5.0, 10.0, 25.0, 50.0]
+	object-count = [5, 10, 50, 100, 200]
+	object-size = [5, 10, 100, 200, 500, 1000]
+	loss-p = [0.0, 1.0, 2.0, 3.0, 5.0]
+	corrupt-percent = [0.0, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0]
+	duplicate-percent = [0.0, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0]
+	delay-time = [20, 50, 100, 150, 200]
+	delay-jitter = [5, 20, 40, 60, 80, 100]
+
+[[dual-variations]]
+
+	axis1 = 'delay-time'
+	axis2 = 'delay-jitter'
+	values = [[100, 20], [200, 20]]
+\end{lstlisting}
+\label{fig:config}
+\caption{Configuration TOML}
+\end{figure}
+
+The testing program is given a configuration file as a command line argument. It follows a basic algorithm:
+
+\begin{enumerate}[topsep=0pt,itemsep=-1ex,partopsep=1ex,parsep=1ex]
+	\item Generate treatment details for every variation and dual variation listed
+	\item Launch Chrome processes and connect to their remote debugging inteface
+	\item Start an SSH session with the remote router running on AWS
+	\item Run each treatment
+	\begin{enumerate}[topsep=0pt,itemsep=-1ex,partopsep=1ex,parsep=1ex]
+		\item Configure the remote router with the correct network variation parameters
+		\item Configure the local Chrome instance with the correct request parameters
+		\item Fire the request and return the resulting timing information
+	\end{enumerate}
+	\item Save and aggregate the results as both JSON and CSV
+\end{enumerate}
+
+During the course of testing a variety of information is provided on screen and logged permanently, including the estimated time to complete the given tests.
+
+Once testing is complete, charts are automatically generated using standard Python scientific computing tools Panda and Seaborn (based on Matplotlib). Adding new chart types is a matter of writing a few line function as a form of plugin.
+
 \begin{figure}
 \begin{tabular}{c c}
 \includegraphics[scale=.25]{images/local.png} & \includegraphics[scale=.25]{images/aws.png}\\
@@ -135,19 +201,96 @@ Network shaping was performed at the EC2 router using tc htb and qdisc.
 \centering
 \begin{tabular}{c|c}
 	Parameter	&	Values tested 	\\\hline
+	Rate Limit (Mbit) 	&	1, 5, 10, 25, 50	\\
 	Object Size (KB)	&	5, 10, 100, 200, 500, 1000	\\
-	Object Count &	5, 10, 50, 100, 500	\\
-	Rate Limit (Mbps) 	&	5, 10, 25, 50	\\
-	Packet Loss (\%)	&	0.0, 0.1, 1.0, 2.0	\\
-	Latency (ms)		&	0, 50, 100, 200	\\
+	Object Count &	5, 10, 50, 100, 200	\\
+	Packet Loss (\%)	&	0, 1, 3, 5	\\
+	Packet Corruption (\%) & 0, 1, 2, 3, 5, 10*, 15* \\
+	Packet Duplication (\%) & 0, 1, 2, 3, 5, 10, 15 \\
+	Packet Delay (ms)		&	20, 50, 100, 150, 200	\\
+	Packet Jitter (ms)		& 5, 20, 40, 60, 80, 100 \\
 \end{tabular}
-\caption{Test Variables}
+\caption{Test Variables (*only for the EC2 instance on the same VLAN)}
 \label{test_variables}
 \end{figure}
 
-
 \section{Data}
 \label{data}
+
+Ninety treatments as detailed in Figure \ref{test_variables} were run for TCP/HTTP2 and QUIC, from three locations, with 100 iterations each, giving a total of 54,000 requests. These results were aggregated down to the 540 distinct situations with their mean and standard deviation recorded. The raw results and these aggregations are available on request.
+
+We present a selection of charts, comparing the three environments horizontally in every case.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
+	Local Desktop & Same VLAN & Cross-Continent EC2 Instance \\
+	\includegraphics[width=.33\textwidth]{{plots/local/rate-limit}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/rate-limit}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/rate-limit}.eps} \\
+\end{tabular}
+\caption{Comparing effect of rate limit}
+\label{figs:rate_limit}
+\end{figure}
+
+In Figure \ref{figs:rate_limit} we see that for a local desktop consumer on a typical Internet connection, we can expect QUIC to outperform TCP/IP in every case, but maximally in the 5-25 megabit range. As discussed later, QUIC does not outperform TCP/IP when the desktop is on the same VLAN and in the same physical location in the AWS cloud.
+
+By showing that an EC2 instance in a different physical location and on a different VLAN has performance similar to a consume desktop, we see that there is some network condition or optimization in play that is not peculiar to EC2, Linux, the Chrome Linux build, or the AWS cloud in general. Extensive investigation with iperf and varying network parameters as in the following data have not yielded an explanation for this discrepancy.
+
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
+	Local Desktop & Same VLAN & Cross-Continent EC2 Instance \\
+	\includegraphics[width=.33\textwidth]{{plots/local/loss-p}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/loss-p}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/loss-p}.eps} \\
+
+	\includegraphics[width=.33\textwidth]{{plots/local/duplicate-percent}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/duplicate-percent}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/duplicate-percent}.eps} \\
+
+	\includegraphics[width=.33\textwidth]{{plots/local/corrupt-percent}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/corrupt-percent}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/corrupt-percent}.eps} \\
+\end{tabular}
+\caption{Comparing effect of packet loss, duplication, and corruption}
+\label{figs:packet_disruption}
+\end{figure}
+
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
+	Local Desktop & Same VLAN & Cross-Continent EC2 Instance \\
+	\includegraphics[width=.33\textwidth]{{plots/local/delay-time}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/delay-time}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/delay-time}.eps} \\
+
+	\includegraphics[width=.33\textwidth]{{plots/local/delay-jitter}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/delay-jitter}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/delay-jitter}.eps} \\
+\end{tabular}
+\caption{Comparing effect of packet loss, duplication, delay, and jitter}
+\label{figs:packet_timing}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c c}
+	Local Desktop & Same VLAN & Cross-Continent EC2 Instance \\
+	\includegraphics[width=.33\textwidth]{{plots/local/object-count}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/object-count}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/object-count}.eps} \\
+
+	\includegraphics[width=.33\textwidth]{{plots/local/object-size}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-east1/object-size}.eps} &
+	\includegraphics[width=.33\textwidth]{{plots/ec2-west1/object-size}.eps} \\
+\end{tabular}
+\caption{Comparing effect of object size and count}
+\label{figs:nonobvious}
+\end{figure}
+
 
 \section{Results}
 \label{results}
@@ -156,34 +299,6 @@ Network shaping was performed at the EC2 router using tc htb and qdisc.
 \label{conclusions}
 
 \appendix
-\clearpage
-\section{Additional Data}
-
-\begin{figure}[h]
-\centering
-\begin{tabular}{c c}
-	\includegraphics[width=.4\textwidth]{{plots/local/object-size}.eps} &
-	\includegraphics[width=.4\textwidth]{{plots/local/object-count}.eps}	\\
-	\includegraphics[width=.4\textwidth]{{plots/local/rate-limit}.eps}	&
-	\includegraphics[width=.4\textwidth]{{plots/local/packet-loss}.eps}	\\
-	\multicolumn{2}{c}{\includegraphics[width=.4\textwidth]{{plots/local/latency}.eps}}
-\end{tabular}
-\caption{Local Testbed}
-\label{figs:local}
-\end{figure}
-
-\begin{figure}[]
-\centering
-\begin{tabular}{c c}
-	\includegraphics[width=.4\textwidth]{{plots/ec2/object-size}.eps} &
-	\includegraphics[width=.4\textwidth]{{plots/ec2/object-count}.eps}	\\
-	\includegraphics[width=.4\textwidth]{{plots/ec2/rate-limit}.eps}	&
-	\includegraphics[width=.4\textwidth]{{plots/ec2/packet-loss}.eps}	\\
-	\multicolumn{2}{c}{\includegraphics[width=.4\textwidth]{{plots/ec2/latency}.eps}}
-\end{tabular}
-\caption{EC2 Testbed}
-\label{figs:ec2}
-\end{figure}
 
 \clearpage
 

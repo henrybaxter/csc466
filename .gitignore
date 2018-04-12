@@ -21,3 +21,5 @@ poster/build/
 *.out
 *.fdb_latexmk
 *.nav
+*.bbl
+build/
