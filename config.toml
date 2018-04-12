@@ -77,8 +77,8 @@ chrome-options = [
 	loss-p = [0.0, 1.0, 2.0, 3.0, 5.0]
 	corrupt-percent = [0.0, 1.0, 2.0, 3.0, 5.0]
 	duplicate-percent = [0.0, 1.0, 2.0, 3.0, 5.0]
-	delay-time = [0, 50, 100, 150, 200]
-	delay-jitter = [0, 20, 40, 60, 80, 100]
+	delay-time = [20, 50, 100, 150, 200]
+	delay-jitter = [5, 20, 40, 60, 80, 100]
 
 [[dual-variations]]
 
