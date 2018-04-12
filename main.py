@@ -104,7 +104,7 @@ def generate_treatments(config):
         # hack
         treatment['loss-r'] = 100.0 - treatment['loss-p']
     logger.info('Generated %d treatments', len(treatments))
-    return treatments
+    return treatments, default
 
 
 def start_chrome(config, protocol):
@@ -222,8 +222,7 @@ def save_results(config, treatments):
         json.dump(results, ofp, sort_keys=True, indent=4)
 
 
-def run_treatment(config, router, chrome, treatment):
-    logger.info('Running treatment %s', pprint.pformat(treatment))
+def configure_router(router, treatment):
     command = "sudo ./csc466/set_router.sh"
     logger.debug('Running on router: %s', command)
     logger.debug('Passing JSON to stdin: %s', json.dumps(treatment, indent=4, sort_keys=True))
@@ -237,6 +236,10 @@ def run_treatment(config, router, chrome, treatment):
         logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
         sys.exit(1)
     logger.debug('Output was\n%s', stdout.read().decode('utf-8'))
+
+
+def run_treatment(config, router, chrome, treatment):
+    logger.info('Running treatment %s', pprint.pformat(treatment))
     url = urljoin(
         config['host'],
         'page-{object-count}-{object-size}k.html'.format(**treatment)
@@ -250,7 +253,7 @@ def run_treatment(config, router, chrome, treatment):
     return results
 
 
-def run_treatments(config, router, chromes, treatments):
+def run_treatments(config, router, chromes, treatments, default):
     start = time.time()
     results = []
     for i, treatment in enumerate(treatments):
@@ -259,7 +262,9 @@ def run_treatments(config, router, chromes, treatments):
         cache_key = hashlib.sha256(cache_str.encode('utf-8')).hexdigest()
         cache_path = os.path.join('cache', config['environment'], cache_key + '.json')
         if not os.path.exists(cache_path):
+            configure_router(router, treatment)
             plts = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+            configure_router(router, default)
             json.dump(plts, open(cache_path, 'w'))
         else:
             logger.info('Found in cache')
@@ -278,7 +283,7 @@ def run_treatments(config, router, chromes, treatments):
 def main():
     absolute_start = time.time()
     config = parse_args()
-    treatments = generate_treatments(config)
+    treatments, default = generate_treatments(config)
     try:
         os.makedirs(os.path.join('data', config['environment'], 'partials'))
     except FileExistsError:
@@ -294,7 +299,7 @@ def main():
     router = ssh_connection('csc466-router')
     elapsed = time.time() - absolute_start
     logger.info('Took {:.1f} seconds to prepare for treatments'.format(elapsed))
-    results = run_treatments(config, router, chromes, treatments)
+    results = run_treatments(config, router, chromes, treatments, default)
     save_results(config, results)
     convert_data()
 

@@ -109,6 +109,11 @@ def main():
         df = to_panda_dataframe(results)
         # plot_each_tcp_vs_quic(results['treatments'], out_dir)
         bar_plots(df, environment, out_dir)
+        try:
+            shutil.rmtree('report/plots')
+        except FileNotFoundError:
+            pass
+        shutil.copytree('plots', 'report/plots')
 
 
 if __name__ == '__main__':
