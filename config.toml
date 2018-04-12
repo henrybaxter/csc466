@@ -41,8 +41,8 @@ chrome-options = [
 
 [treatment]
 
-	delay-time = 0 # ms
-	delay-jitter = 0 # ms
+	delay-time = 20 # ms
+	delay-jitter = 5 # ms
 	delay-correlation = 25 # %
 	# one of: uniform, normal, pareto, paretonormal
 	delay-distribution = 'normal'
