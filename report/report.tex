@@ -101,7 +101,7 @@ QUIC is a rapidly evolving protocol, that is used for all Google services. As pu
 \label{methods}
 We now describe the methods used to compare the TCP and QUIC protocols.
 
-% Which processor on local desktop? Which Apache version? Is QUIC source accurate as described?
+% Which processor on local desktop? Which NGINX version? Is QUIC source accurate as described?
 \subsection{Testbed}
 Evaluation was performed in three different network environments, as shown in figure \ref{fig:network}.
 
@@ -109,7 +109,7 @@ The server and remote desktops run on Amazon EC2 T2.Large (Kernel 4.4.0-1054-aws
 
 The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel 2.4 GHz).
 
-All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via Apache 2.4, and over QUIC via the QUIC standalone server, as provided with the Chromium source code.
+All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via NGINX 2.4, and over QUIC via the QUIC standalone server, as provided with the Chromium source code.
 
 \begin{figure}
 \begin{tabular}{c c}
@@ -125,7 +125,26 @@ All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). Th
 \label{fig:network}
 \end{figure}
 
-\subsection{}
+\subsection{Testing Variables}
+Various treatments of network conditions were evaluated for each of the protocols. Parallel instances of Chrome were launched on either a local machine, or an EC2 instance. Treatments were generated from a configuration file, the variations are shown in table \ref{test_variables}. When a treatment is run, the test environment is automatically configured. Requests are initiated programmatically and page load time is captured for multiple runs. For each treatment, 100 iterations are performed of each protocol.
+
+Network shaping was performed at the EC2 router using tc htb and qdisc.
+% Going off of config file as of 04/11/18:46...update if there are others missing
+\begin{figure}
+\centering
+\begin{tabular}{c|c}
+	Parameter	&	Values tested 	\\\hline
+	Object Size (KB)	&	5, 10, 100, 200, 500, 1000	\\
+	Object Count &	5, 10, 50, 100, 500	\\
+	Rate Limit (Mbps) 	&	5, 10, 25, 50	\\
+	Packet Loss (\%)	&	0.0, 0.1, 1.0, 2.0	\\
+	Latency (ms)		&	0, 50, 100, 200	\\
+\end{tabular}
+\caption{Test Variables}
+\label{test_variables}
+\end{figure}
+
+
 \section{Data}
 \label{data}
 
@@ -153,5 +172,5 @@ Henry:	&	Liam:	\\ \hline
 \end{tabularx}
 
 \bibliography{bibliography}{}
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \end{document}
