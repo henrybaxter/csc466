@@ -18,6 +18,13 @@ from convert_data import convert_data
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
+root_logger = logging.getLogger()
+fh = logging.FileHandler('main.log')
+ch = logging.StreamHandler()
+fh.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
+root_logger.addHandler(fh)
+root_logger.addHandler(ch)
 
 
 def parse_args():
@@ -95,6 +102,9 @@ def generate_treatments(config):
                     'varying': '{}, {}'.format(axis1, axis2)
                 })
                 treatments.append(variation)
+    for treatment in treatments:
+        # hack
+        treatment['loss-r'] = 1.0 - treatment['loss-p']
     logger.info('Generated %d treatments', len(treatments))
     return treatments
 
@@ -129,6 +139,7 @@ def start_chrome_processes(config):
 
 
 def connect_chrome_interfaces(config):
+    logger.debug('Connecting chrome interfaces')
     chromes = {}
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
@@ -142,6 +153,7 @@ def connect_chrome_interfaces(config):
 
 
 def ssh_connection(host):
+    logger.debug('Making ssh connection')
     client = paramiko.SSHClient()
     client._policy = paramiko.WarningPolicy()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -218,10 +230,10 @@ def save_results(config, treatments):
 
 
 def run_treatment(config, router, chrome, treatment):
-    logger.info('Running treatment %s', pprint.pformat(treatment))
+    logger.debug('Running treatment %s', pprint.pformat(treatment))
     command = "sudo ./csc466/set_router.sh"
-    logger.info('Running on router: %s', command)
-    logger.info('Passing JSON to stdin: %s', json.dumps(treatment, indent=4, sort_keys=True))
+    logger.debug('Running on router: %s', command)
+    logger.debug('Passing JSON to stdin: %s', json.dumps(treatment, indent=4, sort_keys=True))
     stdin, stdout, stderr = router.exec_command(command)
     stdin.write(json.dumps(treatment, indent=4, sort_keys=True))
     stdin.flush()
@@ -231,7 +243,7 @@ def run_treatment(config, router, chrome, treatment):
     if retcode:
         logger.error('Retcode was %d, output was\n%s', retcode, stderr.read().decode('utf-8'))
         sys.exit(1)
-    logger.info('Output was\n%s', stdout.read().decode('utf-8'))
+    logger.debug('Output was\n%s', stdout.read().decode('utf-8'))
     url = urljoin(
         config['host'],
         'page-{object-count}-{object-size}k.html'.format(**treatment)

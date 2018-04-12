@@ -71,10 +71,10 @@ chrome-options = [
 
 [variations]
 
-	object-count = [5, 10]
+	rate-limit = [1, 5, 10, 25, 50]
 
 [[dual-variations]]
 
 	axis1 = 'delay-time'
 	axis2 = 'delay-jitter'
-	values = [[50,10], [100,20]]
+	values = []
