@@ -20,11 +20,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 root_logger = logging.getLogger()
 fh = logging.FileHandler('main.log')
-ch = logging.StreamHandler()
 fh.setLevel(logging.DEBUG)
-ch.setLevel(logging.INFO)
 root_logger.addHandler(fh)
-root_logger.addHandler(ch)
 
 
 def parse_args():
