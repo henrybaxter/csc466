@@ -6,6 +6,7 @@
 \usepackage{url} % For url in citations...maybe
 \usepackage{tabularx}
 \usepackage{graphicx} % For graphics
+\usepackage{multicol}
 
 \doublespacing
 \begin{document}
@@ -30,14 +31,14 @@ QUIC (Quick UDP Internet Connections) is a new transport protocol, first impleme
 
 While these features allow QUIC to see swift development, they in turn make analysis of the protocol very difficult. Following the work of Kakhki, et al.\cite{Kakhki:2017:TLL:3131365.3131368}, we firstly replicate the work of Kakhki and verify their conclusions. We additionally modify their methodology to allow for replicability and tracking of future QUIC versions.
 
-Comparison of QUIC and TCP is done in two testing environments. One, a local client makes requests to an EC2 instance that acts as the QUIC and TCP server, with an additional EC2 instance used to shape network traffic. The other testing environment exists entirely on an Amazon VLAN; one EC2 instance acts as a desktop computer, with two other EC2 instances acting as a router and server, as above. Parallel requests are made to a QUIC and TCP server, with variations in pages requested, as well as varying network conditions.
+Comparison of QUIC and TCP is done in three testing environments. One, a local client makes requests to an EC2 instance that acts as the QUIC and TCP server, with an additional EC2 instance used to shape network traffic. The second testing environment exists entirely on an Amazon VLAN; one EC2 instance acts as a desktop computer, with two other EC2 instances acting as a router and server, as above. The third testing environment is similar to the second, with the exception that the EC2 Desktop is at a different physical location than the router and server. Parallel requests are made to the QUIC and TCP server, with variations in pages requested, as well as varying network conditions.
 
 Our results show that QUIC outperforms TCP for nearly all variables tested from the local client. The one case where TCP outperforms QUIC from the local client is for very large numbers of objects. This finding is consistent with Kakhi, et al. For testing done within the Amazon VLAN, TCP slightly outperforms QUIC. This may suggest optimizations for TCP within AWS.
 
 Our results suggest that QUIC is best for a consumer in most situations.
 % More conclusions....
 
-In section \ref{background}, we give a brief overview of the QUIC protocol, and the features that allow for improved performance over TCP. We also present related work on the analysis of QUIC. In \ref{methods}, our testbed and methodology is described in detail. In \ref{data}, the aggregation of our data is presented, and is discussed in \ref{results}. The conclusions of our findings are presented in \ref{conclusions}.
+In section \ref{background}, we give a brief overview of the QUIC protocol, and the features that allow for improved performance over TCP. We also present related work on the analysis of QUIC. In \ref{methods}, our testbed and methodology are described in detail. In \ref{data}, the aggregation of our data is presented, and is discussed in \ref{results}. The conclusions of our findings are presented in \ref{conclusions}.
 
 \section{Background}
 \label{background}
@@ -98,14 +99,33 @@ QUIC is a rapidly evolving protocol, that is used for all Google services. As pu
 
 \section{Methods}
 \label{methods}
+We now describe the methods used to compare the TCP and QUIC protocols.
+
+% Which processor on local desktop? Which Apache version? Is QUIC source accurate as described?
+\subsection{Testbed}
+Evaluation was performed in three different network environments, as shown in figure \ref{fig:network}.
+
+The server and remote desktops run on Amazon EC2 T2.Large (Kernel 4.4.0-1054-aws, Ubuntu 16.04, 8 GB memory, Intel Xeon 3.0GHz\footnote{The T2 EC2 instance uses `burstable' CPU, so clock speed is \emph{up to} 3.0 GHz}).The router runs on Amazon EC2 T2.micro (Kernel 4.4.0-1054-aws, Ubuntu 16.04, 1 GB memory, Intel Xeon 3.3 GHz\footnote{Again, \emph{up to} 3.3 GHz}). The EC2 router and server are located on ec2-east1. One EC2 desktop is on ec2-east1 (as in fig. \ref{fig:network} (b)), and another on ec2-west1 (as in fig. \ref{fig:network} (c)).
+
+The local client is a desktop (macOS High Sierra 10.13.4, 32 GB memory, Intel 2.4 GHz).
+
+All clients run Google Chrome (ver. 65.0.3325.181 (Official Build) (64-bit)). The server supports HTTP/2 over TCP via Apache 2.4, and over QUIC via the QUIC standalone server, as provided with the Chromium source code.
 
 \begin{figure}
-\centering
-\includegraphics[width=\textwidth]{images/Network_diagram.png}
-\caption{Testbed setup for local (a) and EC2 (b)}
+\begin{tabular}{c c}
+\includegraphics[scale=.25]{images/local.png} & \includegraphics[scale=.25]{images/aws.png}\\
+~ & ~ \\
+(a) & (b) \\
+~ & ~ \\
+\multicolumn{2}{c}{\includegraphics[scale=.25]{images/aws_inet.png}} \\
+~ & ~ \\
+\multicolumn{2}{c}{(c)} \\
+\end{tabular}
+\caption{Testbed setup for local (a), EC2 on same VLAN (b) and EC2 on separate VLAN (c)}
 \label{fig:network}
 \end{figure}
 
+\subsection{}
 \section{Data}
 \label{data}
 
