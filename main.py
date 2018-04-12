@@ -1,4 +1,5 @@
 import json
+import hashlib
 import sys
 import argparse
 import logging
@@ -214,11 +215,6 @@ def execute_request(chrome, url):
 
 def save_results(config, treatments):
     root = os.path.join('data', config['environment'])
-    try:
-        shutil.rmtree(root)
-    except FileNotFoundError:
-        pass
-    os.makedirs(root)
     path = os.path.join(root, 'results.json')
     results = config.copy()
     results['treatments'] = treatments
@@ -257,15 +253,17 @@ def run_treatment(config, router, chrome, treatment):
 def run_treatments(config, router, chromes, treatments):
     start = time.time()
     results = []
-    cache = {}
     for i, treatment in enumerate(treatments):
         result = treatment.copy()
-        key = tuple(sorted((key, value) for key, value in treatment.items() if key != 'varying'))
-        if key not in cache:
-            cache[key] = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+        cache_str = json.dumps([(k, v) for k, v in treatment.items() if k != 'varying'], sort_keys=True)
+        cache_key = hashlib.sha256(cache_str.encode('utf-8')).hexdigest()
+        cache_path = os.path.join('cache', config['environment'], cache_key + '.json')
+        if not os.path.exists(cache_path):
+            plts = run_treatment(config, router, chromes[treatment['protocol']], treatment)
+            json.dump(plts, open(cache_path, 'w'))
         else:
-            logger.info('Found treatment in cache!')
-        result['page-load-times'] = cache[key]
+            logger.info('Found in cache')
+        result['page-load-times'] = json.load(open(cache_path))
         results.append(result)
         if config['single']:
             logger.info('Single shot, exiting early')
@@ -281,6 +279,14 @@ def main():
     absolute_start = time.time()
     config = parse_args()
     treatments = generate_treatments(config)
+    try:
+        os.makedirs(os.path.join('data', config['environment'], 'partials'))
+    except FileExistsError:
+        pass
+    try:
+        os.makedirs(os.path.join('cache', config['environment']))
+    except FileExistsError:
+        pass
     # pprint.pprint(treatments)
     if config['start-chrome']:
         start_chrome_processes(config)
