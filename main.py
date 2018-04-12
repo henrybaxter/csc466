@@ -101,7 +101,7 @@ def generate_treatments(config):
                 treatments.append(variation)
     for treatment in treatments:
         # hack
-        treatment['loss-r'] = 1.0 - treatment['loss-p']
+        treatment['loss-r'] = 100.0 - treatment['loss-p']
     logger.info('Generated %d treatments', len(treatments))
     return treatments
 
