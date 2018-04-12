@@ -7,6 +7,7 @@
 \usepackage{tabularx}
 \usepackage{graphicx} % For graphics
 \usepackage{multicol}
+\usepackage{epstopdf}
 
 \doublespacing
 \begin{document}
@@ -155,6 +156,36 @@ Network shaping was performed at the EC2 router using tc htb and qdisc.
 \label{conclusions}
 
 \appendix
+\clearpage
+\section{Additional Data}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{c c}
+	\includegraphics[width=.4\textwidth]{{plots/local/object-size}.eps} &
+	\includegraphics[width=.4\textwidth]{{plots/local/object-count}.eps}	\\
+	\includegraphics[width=.4\textwidth]{{plots/local/rate-limit}.eps}	&
+	\includegraphics[width=.4\textwidth]{{plots/local/packet-loss}.eps}	\\
+	\multicolumn{2}{c}{\includegraphics[width=.4\textwidth]{{plots/local/latency}.eps}}
+\end{tabular}
+\caption{Local Testbed}
+\label{figs:local}
+\end{figure}
+
+\begin{figure}[]
+\centering
+\begin{tabular}{c c}
+	\includegraphics[width=.4\textwidth]{{plots/ec2/object-size}.eps} &
+	\includegraphics[width=.4\textwidth]{{plots/ec2/object-count}.eps}	\\
+	\includegraphics[width=.4\textwidth]{{plots/ec2/rate-limit}.eps}	&
+	\includegraphics[width=.4\textwidth]{{plots/ec2/packet-loss}.eps}	\\
+	\multicolumn{2}{c}{\includegraphics[width=.4\textwidth]{{plots/ec2/latency}.eps}}
+\end{tabular}
+\caption{EC2 Testbed}
+\label{figs:ec2}
+\end{figure}
+
+\clearpage
 
 \section{Contributions}
 The following is a summary of the contributions of each team member:
