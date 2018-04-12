@@ -28,7 +28,7 @@ root_logger.addHandler(ch)
 
 
 def parse_args():
-    logger.debug('Parsing command line arguments')
+    logger.info('Parsing command line arguments')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='config.toml')
     parser.add_argument('--timeout', type=int)
@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument('--iterations', type=int)
     args = parser.parse_args()
     try:
-        logger.debug('Attempting to load TOML values from %s', args.config)
+        logger.info('Attempting to load TOML values from %s', args.config)
         config = toml.load(open(args.config))
     except FileNotFoundError:
         logger.error('Could not find {}'.format(args.config))
@@ -62,12 +62,12 @@ def parse_args():
     config['environment'] = env
     config['single'] = args.single
     config['start-chrome'] = args.start_chrome
-    logger.debug('Command line arguments parsed')
+    logger.info('Command line arguments parsed')
     return config
 
 
 def generate_treatments(config):
-    logger.debug('Generating treatments')
+    logger.info('Generating treatments')
     default = config['treatment'].copy()
     default.update({
         'environment': config['environment'],
@@ -139,7 +139,7 @@ def start_chrome_processes(config):
 
 
 def connect_chrome_interfaces(config):
-    logger.debug('Connecting chrome interfaces')
+    logger.info('Connecting chrome interfaces')
     chromes = {}
     for protocol in ['quic', 'tcp']:
         port = config['{}-debugging-port'.format(protocol)]
@@ -153,7 +153,7 @@ def connect_chrome_interfaces(config):
 
 
 def ssh_connection(host):
-    logger.debug('Making ssh connection')
+    logger.info('Making ssh connection')
     client = paramiko.SSHClient()
     client._policy = paramiko.WarningPolicy()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -181,7 +181,7 @@ def ssh_connection(host):
 
 
 def execute_request(chrome, url):
-    logger.debug('Executing request for {}'.format(url))
+    logger.info('Executing request for {}'.format(url))
     # url += '?random={}'.format(random.random())
     funcs = [
         'chrome.benchmarking.clearCache()',
@@ -230,7 +230,7 @@ def save_results(config, treatments):
 
 
 def run_treatment(config, router, chrome, treatment):
-    logger.debug('Running treatment %s', pprint.pformat(treatment))
+    logger.info('Running treatment %s', pprint.pformat(treatment))
     command = "sudo ./csc466/set_router.sh"
     logger.debug('Running on router: %s', command)
     logger.debug('Passing JSON to stdin: %s', json.dumps(treatment, indent=4, sort_keys=True))
