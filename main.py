@@ -102,6 +102,9 @@ def generate_treatments(config):
                     'varying': '{}, {}'.format(axis1, axis2)
                 })
                 treatments.append(variation)
+    for treatment in treatments:
+        # hack
+        treatment['loss-r'] = 1.0 - treatment['loss-p']
     logger.info('Generated %d treatments', len(treatments))
     return treatments
 

@@ -41,23 +41,23 @@ chrome-options = [
 
 [treatment]
 
-	delay-time = 100 # ms
-	delay-jitter = 20 # ms
+	delay-time = 50 # ms
+	delay-jitter = 10 # ms
 	delay-correlation = 25 # %
 	# one of: uniform, normal, pareto, paretonormal
 	delay-distribution = 'normal'
 
 	# Gilbert-Elliot model
-	loss-p = 0.02 # [0,1] probability of transition to 'bad state'
-	loss-r = 0.98 # [0,1] probability of transition to 'good state'
-	loss-h = 0 # [0,1] 1 - h is loss probability in the good state
-	loss-k = 1.0 # [0,1] 1 - k is loss probability in the bad state
+	loss-p = 0.0 # [0,1] probability of transition to 'bad state'
+	loss-r = 1.0 # [0,1] probability of transition to 'good state'
+	loss-h = 1.0 # [0,1] 1 - h is loss probability in the bad state
+	loss-k = 0.0 # [0,1] 1 - k is loss probability in the good state
 
 	# introducing bit errors in packets
-	corrupt-percent = 0.1 # %
+	corrupt-percent = 0.0 # %
 	corrupt-correlation = 25 # %
 
-	duplicate-percent = 0.1 # %
+	duplicate-percent = 0.0 # %
 	duplicate-correlation = 25 # %
 
 	# tc qdisc ceil in mbit
@@ -74,8 +74,10 @@ chrome-options = [
 	rate-limit = [5.0, 10.0, 25.0, 50.0]
 	object-count = [5, 10, 50, 100, 500]
 	object-size = [5, 10, 100, 200, 500, 1000]
-	loss-p = [0.0, 0.01, 0.02, 0.03]
-	delay-time = [50, 100, 150]
+	loss-p = [0.0, 0.01, 0.03, 0.05]
+	corrupt-percent = [0.0, 0.3, 0.6, 1.0]
+	duplicate-percent = [0.0, 0.3, 0.6, 1.0]
+	delay-time = [10, 50, 100, 150]
 
 [[dual-variations]]
 
